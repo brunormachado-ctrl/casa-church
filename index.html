@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Casa Church</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <span class="emblem" aria-hidden="true">
+            <svg viewBox="0 0 100 100" fill="none" stroke="#d9c6a6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="50" cy="50" r="46" stroke-width="2.5"/>
+              <circle cx="50" cy="50" r="38" stroke-width="2.5"/>
+              <path d="M27 61 L46 37 L57 49 L69 38 L83 61" stroke-width="4.5"/>
+            </svg>
+          </span>
+          <b>Casa <span>Church</span></b>
+        </div>
+        <a class="btn" href="cadastro.html?tipo=visitante"><i class="ti ti-hand-love-you"></i>Sou visitante</a>
+        <a class="btn solid" href="cadastro.html?tipo=membro"><i class="ti ti-user-plus"></i>Fazer cadastro</a>
+      </div>
+      <nav class="menu" id="menu"></nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <span class="arch" aria-hidden="true"></span>
+    <span class="glow" aria-hidden="true"></span>
+    <svg class="herologo" viewBox="0 0 200 200" fill="none" stroke="#d9c6a6" aria-label="Logo Casa Church">
+      <circle cx="100" cy="100" r="94" stroke-width="3"/>
+      <circle cx="100" cy="100" r="84" stroke-width="3"/>
+      <path d="M48 90 L88 50 L112 73 L133 55 L156 90" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="101" y="123" text-anchor="middle" fill="#d9c6a6" stroke="none" font-family="Archivo,sans-serif" font-weight="700" font-size="40" letter-spacing="2">CASA</text>
+      <text x="101" y="143" text-anchor="middle" fill="#d9c6a6" stroke="none" font-family="Archivo,sans-serif" font-weight="600" font-size="16" letter-spacing="7">CHURCH</text>
+      <line x1="55" y1="158" x2="73" y2="158" stroke-width="1"/>
+      <line x1="129" y1="158" x2="147" y2="158" stroke-width="1"/>
+      <text x="101" y="161" text-anchor="middle" fill="#d9c6a6" stroke="none" font-family="Inter,sans-serif" font-size="7.5" letter-spacing="2.5">COMUNIDADE CRISTÃ</text>
+    </svg>
+    <p class="kicker" id="kicker"></p>
+    <h1 id="heroTitle"></h1>
+    <p class="sub" id="heroSub"></p>
+    <div class="pill"><span class="dot"></span>Próximo culto:&nbsp;<strong id="nextService">—</strong></div>
+  </section>
+
+  <div id="eventBanner"></div>
+
+  <main class="wrap">
+    <div class="grid" id="cards"></div>
+  </main>
+
+  <footer>
+    <div class="wrap foot">
+      <span id="footRodape">© Casa Church</span>
+      <a id="instaLink" href="#" target="_blank" rel="noopener"><i class="ti ti-brand-instagram"></i>Instagram</a>
+      <a href="admin.html"><i class="ti ti-lock"></i>Área do administrador</a>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script type="module">
+    import { getConfig } from './db.js';
+    const config = await getConfig();
+
+    const menu = document.getElementById("menu");
+    config.cartoes.filter(c=>c.ativo).forEach(c=>{
+      menu.insertAdjacentHTML("beforeend", `<a href="#${c.id}"><i class="ti ${c.icone}"></i>${c.titulo}</a>`);
+    });
+
+    document.getElementById("kicker").textContent = config.kicker;
+    document.getElementById("heroTitle").textContent = config.heroTitulo;
+    document.getElementById("heroSub").textContent = config.tagline;
+    document.getElementById("footRodape").textContent = config.rodape;
+    if(config.instagram){
+      const il = document.getElementById("instaLink");
+      il.href = config.instagram.url;
+      il.innerHTML = `<i class="ti ti-brand-instagram"></i>@${config.instagram.usuario}`;
+    }
+
+    (function(){
+      const agora = new Date();
+      const hoje = agora.getDay(), horaAgora = agora.getHours();
+      let melhor=null, menorDist=99;
+      config.cultos.forEach(c=>{
+        let dist = (c.diaSemana - hoje + 7) % 7;
+        if(dist===0 && horaAgora >= c.h24) dist = 7;
+        if(dist < menorDist){ menorDist=dist; melhor=c; }
+      });
+      if(melhor){
+        const quando = menorDist===0 ? "hoje" : menorDist===1 ? "amanhã" : melhor.dia.toLowerCase();
+        document.getElementById("nextService").textContent = `${quando}, ${melhor.hora}`;
+      }
+    })();
+
+    if(config.eventoEspecial && config.eventoEspecial.ativo){
+      document.getElementById("eventBanner").innerHTML =
+        `<div class="event"><i class="ti ti-flame"></i><span><strong>${config.eventoEspecial.titulo}</strong> — ${config.eventoEspecial.texto}</span></div>`;
+    }
+
+    const cards = document.getElementById("cards");
+    config.cartoes.filter(c=>c.ativo).forEach(c=>{
+      let corpo = "";
+      if(c.tipo==="cultos"){
+        corpo = config.cultos.map(s=>`<div class="row"><b>${s.dia} · ${s.nome}</b><span class="t">${s.hora}</span></div>`).join("");
+      } else if(c.tipo==="ministerios"){
+        corpo = `<div class="chips">${config.ministerios.map(m=>`<span class="chip">${m}</span>`).join("")}</div>`;
+      } else if(c.tipo==="endereco"){
+        const q = encodeURIComponent(c.texto||"");
+        corpo = `<iframe class="mapa" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${q}&output=embed"></iframe><p class="txt">${c.texto}</p><a class="link" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${q}">Como chegar →</a>`;
+      } else {
+        corpo = `<p class="txt">${c.texto||""}</p>` + (c.botao?`<button class="btn block" onclick="alert('Ação: ${c.botao}')"><i class="ti ti-brand-whatsapp"></i>${c.botao}</button>`:"");
+      }
+      cards.insertAdjacentHTML("beforeend",
+        `<div class="card" id="${c.id}"><h3><i class="ti ${c.icone}"></i>${c.titulo}</h3>${corpo}</div>`);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administração · Casa Church</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .login{max-width:380px;margin:40px auto;padding:0 18px}
+    .badge{font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:999px;font-weight:500}
+    .b-vis{background:var(--teal-soft);color:#7fd3df}
+    .b-mem{background:rgba(217,198,166,.16);color:var(--sand)}
+    .b-pend{background:rgba(207,130,70,.16);color:#e7b483}
+    .b-aprov{background:rgba(63,174,142,.16);color:#7fe0c2}
+    .cad{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+    .cad .top-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+    .cad .nome{font-weight:500;font-size:16px;margin-right:auto}
+    .cad dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;margin:10px 0;color:var(--ink)}
+    .cad dt{color:var(--muted)}
+    .cad .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+    .filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .filtro{font-size:13px;padding:7px 13px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;color:var(--muted)}
+    .filtro.on{border-color:var(--teal);color:var(--ink);background:var(--teal-soft)}
+    .err{color:var(--danger);font-size:14px;margin-top:10px;min-height:18px}
+    .ok-msg{color:var(--ok);font-size:14px;margin-top:10px;min-height:18px}
+    .secao{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+    .secao h3{font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--sand);margin-bottom:14px}
+    .toggle-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+    .toggle-row:last-child{border-bottom:0}
+    .toggle-row input{width:auto}
+    .toggle-row .lbl{margin-right:auto;font-size:14px}
+    .switch-tabs{display:flex;gap:8px;margin-bottom:20px}
+    .empty{text-align:center;color:var(--muted);padding:40px 10px}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <div class="topbar">
+        <a class="brand" href="index.html">
+          <span class="emblem" aria-hidden="true">
+            <svg viewBox="0 0 100 100" fill="none" stroke="#d9c6a6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="50" cy="50" r="46" stroke-width="2.5"/>
+              <circle cx="50" cy="50" r="38" stroke-width="2.5"/>
+              <path d="M27 61 L46 37 L57 49 L69 38 L83 61" stroke-width="4.5"/>
+            </svg>
+          </span>
+          <b>Casa <span>Church</span> · Admin</b>
+        </a>
+        <button class="btn hidden" id="btnSair" onclick="sair()"><i class="ti ti-logout"></i>Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ====== LOGIN ====== -->
+  <div class="login" id="viewLogin">
+    <h1 class="page-title">Entrar</h1>
+    <p class="page-sub">Área restrita à liderança da Casa Church.</p>
+    <div class="field"><label>E-mail</label><input id="email" type="email" placeholder="seu@email.com" /></div>
+    <div class="field"><label>Senha</label><input id="senha" type="password" placeholder="••••••••" /></div>
+    <button class="btn solid block lg" onclick="entrar()"><i class="ti ti-login"></i> Entrar</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+
+  <!-- ====== PAINEL ====== -->
+  <div class="container hidden" id="viewPainel" style="max-width:720px">
+    <div class="switch-tabs">
+      <div class="tab active" id="tabCad" onclick="abaPainel('cad')"><i class="ti ti-users"></i> Cadastros</div>
+      <div class="tab" id="tabCfg" onclick="abaPainel('cfg')"><i class="ti ti-settings"></i> Configurar site</div>
+    </div>
+
+    <!-- Cadastros -->
+    <div id="paneCad">
+      <div class="filtros" id="filtros">
+        <span class="filtro on" data-f="todos" onclick="filtrar(this)">Todos</span>
+        <span class="filtro" data-f="pendente" onclick="filtrar(this)">Pendentes</span>
+        <span class="filtro" data-f="visitante" onclick="filtrar(this)">Visitantes</span>
+        <span class="filtro" data-f="membro" onclick="filtrar(this)">Membros</span>
+      </div>
+      <div id="listaCad"><p class="empty">Carregando…</p></div>
+    </div>
+
+    <!-- Configurar -->
+    <div id="paneCfg" class="hidden">
+      <div class="secao">
+        <h3>Topo do site</h3>
+        <div class="field"><label>Frase de cima (kicker)</label><input id="c_kicker" /></div>
+        <div class="field"><label>Título grande</label><input id="c_heroTitulo" /></div>
+        <div class="field"><label>Subtítulo</label><input id="c_tagline" /></div>
+      </div>
+      <div class="secao">
+        <h3>Evento especial</h3>
+        <div class="toggle-row"><span class="lbl">Mostrar a faixa do evento</span><input type="checkbox" id="c_evAtivo" /></div>
+        <div class="field" style="margin-top:12px"><label>Título</label><input id="c_evTitulo" /></div>
+        <div class="field"><label>Texto</label><input id="c_evTexto" /></div>
+      </div>
+      <div class="secao">
+        <h3>Ministérios</h3>
+        <div class="field"><label>Um por linha</label><textarea id="c_ministerios" style="min-height:120px"></textarea></div>
+      </div>
+      <div class="secao">
+        <h3>Seções que aparecem no site</h3>
+        <div id="c_cartoes"></div>
+      </div>
+      <div class="secao">
+        <h3>Contato</h3>
+        <div class="field"><label>Endereço</label><input id="c_endereco" /></div>
+        <div class="field"><label>Instagram (usuário, sem @)</label><input id="c_instaUser" /></div>
+        <div class="field"><label>WhatsApp da igreja (só números, com DDI 55)</label><input id="c_whatsapp" /></div>
+      </div>
+      <button class="btn solid block lg" onclick="salvar()"><i class="ti ti-device-floppy"></i> Salvar alterações</button>
+      <div class="ok-msg" id="cfgMsg"></div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script type="module">
+    import { sb, getConfig, salvarConfig } from './db.js';
+
+    let cfgAtual = null;
+    let filtroAtual = 'todos';
+
+    const $ = id => document.getElementById(id);
+    const labels = {
+      vezes:'Já veio', comoConheceu:'Conheceu por', nascimento:'Nascimento',
+      conversao:'Aceitou Jesus', endereco:'Endereço', batizado:'Batismo',
+      tempoMembro:'Tempo de membro', serve:'Serve', ministerios:'Ministérios', obs:'Observações'
+    };
+
+    window.entrar = async function(){
+      $('loginErr').textContent = '';
+      const { error } = await sb.auth.signInWithPassword({ email:$('email').value.trim(), password:$('senha').value });
+      if(error){ $('loginErr').textContent = 'E-mail ou senha incorretos.'; return; }
+      mostrarPainel();
+    };
+    window.sair = async function(){ await sb.auth.signOut(); location.reload(); };
+
+    async function mostrarPainel(){
+      $('viewLogin').classList.add('hidden');
+      $('viewPainel').classList.remove('hidden');
+      $('btnSair').classList.remove('hidden');
+      await carregarCadastros();
+      cfgAtual = await getConfig();
+      preencherConfig(cfgAtual);
+    }
+
+    window.abaPainel = function(qual){
+      const cad = qual==='cad';
+      $('tabCad').classList.toggle('active', cad);
+      $('tabCfg').classList.toggle('active', !cad);
+      $('paneCad').classList.toggle('hidden', !cad);
+      $('paneCfg').classList.toggle('hidden', cad);
+    };
+
+    window.filtrar = function(el){
+      document.querySelectorAll('.filtro').forEach(f=>f.classList.remove('on'));
+      el.classList.add('on');
+      filtroAtual = el.dataset.f;
+      carregarCadastros();
+    };
+
+    async function carregarCadastros(){
+      const { data, error } = await sb.from('casa_cadastros').select('*').order('criado_em',{ascending:false});
+      const box = $('listaCad');
+      if(error){ box.innerHTML = `<p class="empty">Erro ao carregar: ${error.message}</p>`; return; }
+      let lista = data||[];
+      if(filtroAtual==='pendente') lista = lista.filter(c=>c.status==='pendente');
+      else if(filtroAtual==='visitante') lista = lista.filter(c=>c.tipo==='visitante');
+      else if(filtroAtual==='membro') lista = lista.filter(c=>c.tipo==='membro');
+      if(!lista.length){ box.innerHTML = `<p class="empty">Nenhum cadastro por aqui ainda.</p>`; return; }
+      box.innerHTML = lista.map(render).join('');
+    }
+
+    function render(c){
+      const d = c.dados||{};
+      const data = new Date(c.criado_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+      const tel = (c.whatsapp||'').replace(/\D/g,'');
+      const wa = tel ? `https://wa.me/55${tel}` : '#';
+      let linhas = '';
+      for(const k in d){
+        if(['quando','consent'].includes(k) || d[k]==='' || d[k]==null) continue;
+        const val = Array.isArray(d[k]) ? (d[k].join(', ')||'—') : d[k];
+        if(Array.isArray(d[k]) && !d[k].length) continue;
+        linhas += `<dt>${labels[k]||k}</dt><dd>${val}</dd>`;
+      }
+      const badgeTipo = c.tipo==='membro' ? '<span class="badge b-mem">Membro</span>' : '<span class="badge b-vis">Visitante</span>';
+      const badgeStatus = c.status==='aprovado' ? '<span class="badge b-aprov">Aprovado</span>' : '<span class="badge b-pend">Pendente</span>';
+      const btnAprovar = c.status==='pendente' ? `<button class="btn" onclick="aprovar('${c.id}')"><i class="ti ti-check"></i> Aprovar</button>` : '';
+      return `<div class="cad">
+        <div class="top-line"><span class="nome">${c.nome}</span>${badgeTipo}${badgeStatus}</div>
+        <div class="top-line" style="margin-bottom:0"><a class="link" href="${wa}" target="_blank"><i class="ti ti-brand-whatsapp"></i> ${c.whatsapp}</a><span style="color:var(--muted);font-size:13px;margin-left:auto">${data}</span></div>
+        ${linhas?`<dl>${linhas}</dl>`:''}
+        <div class="acoes">${btnAprovar}<button class="btn" onclick="excluir('${c.id}','${c.nome.replace(/'/g,"")}')"><i class="ti ti-trash"></i> Excluir</button></div>
+      </div>`;
+    }
+
+    window.aprovar = async function(id){
+      await sb.from('casa_cadastros').update({status:'aprovado'}).eq('id',id);
+      carregarCadastros();
+    };
+    window.excluir = async function(id,nome){
+      if(!confirm(`Excluir o cadastro de ${nome}? Essa ação não volta.`)) return;
+      await sb.from('casa_cadastros').delete().eq('id',id);
+      carregarCadastros();
+    };
+
+    function preencherConfig(c){
+      $('c_kicker').value = c.kicker||'';
+      $('c_heroTitulo').value = c.heroTitulo||'';
+      $('c_tagline').value = c.tagline||'';
+      $('c_evAtivo').checked = !!(c.eventoEspecial&&c.eventoEspecial.ativo);
+      $('c_evTitulo').value = c.eventoEspecial?.titulo||'';
+      $('c_evTexto').value = c.eventoEspecial?.texto||'';
+      $('c_ministerios').value = (c.ministerios||[]).join('\n');
+      $('c_endereco').value = (c.cartoes||[]).find(x=>x.id==='endereco')?.texto||'';
+      $('c_instaUser').value = c.instagram?.usuario||'';
+      $('c_whatsapp').value = c.whatsapp||'';
+      $('c_cartoes').innerHTML = (c.cartoes||[]).map((ct,i)=>
+        `<div class="toggle-row"><span class="lbl">${ct.titulo}</span><input type="checkbox" data-i="${i}" ${ct.ativo?'checked':''}></div>`).join('');
+    }
+
+    window.salvar = async function(){
+      $('cfgMsg').textContent = '';
+      const c = JSON.parse(JSON.stringify(cfgAtual));
+      c.kicker = $('c_kicker').value;
+      c.heroTitulo = $('c_heroTitulo').value;
+      c.tagline = $('c_tagline').value;
+      c.eventoEspecial = { ativo:$('c_evAtivo').checked, titulo:$('c_evTitulo').value, texto:$('c_evTexto').value };
+      c.ministerios = $('c_ministerios').value.split('\n').map(s=>s.trim()).filter(Boolean);
+      c.instagram = { usuario:$('c_instaUser').value.replace('@',''), url:'https://www.instagram.com/'+$('c_instaUser').value.replace('@','')+'/' };
+      c.whatsapp = $('c_whatsapp').value.replace(/\D/g,'');
+      document.querySelectorAll('#c_cartoes input').forEach(inp=>{ c.cartoes[+inp.dataset.i].ativo = inp.checked; });
+      const end = (c.cartoes||[]).find(x=>x.id==='endereco'); if(end) end.texto = $('c_endereco').value;
+      try{
+        await salvarConfig(c);
+        cfgAtual = c;
+        $('cfgMsg').textContent = 'Salvo! As mudanças já valem no site. ✔';
+      }catch(e){ $('cfgMsg').textContent = ''; $('cfgMsg').className='err'; $('cfgMsg').textContent = 'Erro ao salvar: '+e.message; }
+    };
+
+    // já entra direto se a sessão estiver ativa
+    const { data:{ session } } = await sb.auth.getSession();
+    if(session) mostrarPainel();
+  </script>
+</body>
+</html>

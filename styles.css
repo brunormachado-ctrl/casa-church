@@ -1,0 +1,112 @@
+/* =====================================================================
+   Casa Church — folha de estilo compartilhada (identidade visual)
+   Usada por index.html, cadastro.html e admin.html.
+   ===================================================================== */
+:root{
+  --bg:#0d0e10; --surface:#16181b; --surface2:#1d2125;
+  --ink:#efe7d9; --muted:#9d978b; --line:rgba(255,255,255,.10);
+  --teal:#2d8d9b; --teal-soft:rgba(45,141,155,.16);
+  --sand:#d9c6a6; --warm:#cf8246;
+  --ok:#3fae8e; --danger:#e1654f;
+  --radius:18px; --max:1000px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.disp{font-family:'Archivo',sans-serif;font-weight:700;letter-spacing:.5px}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 18px}
+
+/* ---- botões ---- */
+.btn{display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:500;border-radius:999px;padding:11px 18px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--sand)}
+.btn.solid{background:var(--teal);color:#06222a;border-color:var(--teal);font-weight:600}
+.btn.solid:hover{filter:brightness(1.08)}
+.btn.block{width:100%;justify-content:center}
+.btn.lg{padding:14px 22px;font-size:16px}
+
+/* ---- topo / marca ---- */
+header.top{background:rgba(13,14,16,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.topbar{display:flex;align-items:center;gap:12px;padding:13px 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;margin-right:auto}
+.emblem{width:42px;height:42px;display:flex;align-items:center;justify-content:center;flex:none}
+.emblem svg{width:42px;height:42px}
+.herologo{display:block;margin:0 auto 22px;width:150px;height:150px}
+.brand b{font-family:'Archivo',sans-serif;font-weight:700;font-size:18px;letter-spacing:2px;text-transform:uppercase}
+.brand b span{color:var(--muted);font-weight:500}
+nav.menu{display:flex;gap:4px 6px;flex-wrap:wrap;padding-bottom:11px}
+nav.menu a{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--muted);padding:7px 11px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
+nav.menu a:hover{background:var(--teal-soft);color:var(--ink)}
+
+/* ---- hero (homepage) ---- */
+.hero{position:relative;text-align:center;padding:64px 18px 58px;overflow:hidden}
+.hero .arch{position:absolute;top:34px;left:50%;transform:translateX(-50%);width:300px;height:360px;background:var(--teal);opacity:.16;border-radius:300px 300px 0 0;z-index:0}
+.hero .glow{position:absolute;bottom:-60px;left:50%;transform:translateX(-50%);width:520px;height:160px;background:var(--warm);opacity:.18;filter:blur(60px);z-index:0}
+.hero>*{position:relative;z-index:1}
+.hero .photo-tag{position:absolute;top:10px;right:14px;font-size:11px;color:var(--muted);opacity:.6;font-family:monospace;z-index:1}
+.kicker{font-family:'Archivo',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:4px;font-size:13px;color:var(--teal);margin-bottom:14px}
+.hero h1{font-size:46px;line-height:1.02;text-transform:uppercase;color:var(--sand);margin-bottom:14px}
+.hero p.sub{max-width:460px;margin:0 auto;color:var(--muted);font-size:16px}
+.pill{display:inline-flex;align-items:center;gap:8px;margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:14px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+
+/* ---- banner de evento ---- */
+.event{display:flex;align-items:center;gap:11px;justify-content:center;background:rgba(207,130,70,.13);border-top:1px solid var(--line);border-bottom:1px solid var(--line);color:#e7b483;padding:13px 18px;font-size:14px;text-align:center;flex-wrap:wrap}
+.event i{font-size:20px}
+.event strong{color:var(--sand);font-weight:600}
+
+/* ---- cartões ---- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;padding:30px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card h3{font-size:15px;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.card h3 i{font-size:20px;color:var(--teal)}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row b{font-weight:500}
+.row span.t{color:var(--sand);font-family:'Archivo',sans-serif;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{font-size:13px;background:var(--surface2);border:1px solid var(--line);padding:6px 13px;border-radius:999px}
+.map{background:var(--surface2);border:1px solid var(--line);border-radius:12px;height:120px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;font-family:monospace;margin-bottom:12px}
+.mapa{width:100%;height:150px;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;display:block;filter:grayscale(.2)}
+.card p.txt{font-size:14px;color:var(--muted);margin-bottom:14px}
+.link{color:var(--teal);font-weight:500;font-size:14px}
+
+/* ---- rodapé ---- */
+footer{border-top:1px solid var(--line);background:var(--surface);margin-top:14px}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:20px 0;font-size:12px;color:var(--muted)}
+.foot a{display:inline-flex;align-items:center;gap:5px}
+.foot a:hover{color:var(--sand)}
+
+/* ---- formulários ---- */
+.container{max-width:560px;margin:0 auto;padding:26px 18px 60px}
+.page-title{font-size:30px;text-transform:uppercase;color:var(--sand);margin-bottom:6px}
+.page-sub{color:var(--muted);font-size:15px;margin-bottom:24px}
+.tabs{display:flex;gap:8px;margin-bottom:24px}
+.tab{flex:1;text-align:center;padding:12px;border:1px solid var(--line);border-radius:12px;cursor:pointer;font-size:14px;color:var(--muted);background:var(--surface)}
+.tab.active{border-color:var(--teal);color:var(--ink);background:var(--teal-soft)}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.field .req{color:var(--warm)}
+input,select,textarea{width:100%;font-family:inherit;font-size:15px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;transition:.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--teal)}
+textarea{resize:vertical;min-height:80px}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239d978b' stroke-width='2'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.checkbox{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:9px 13px;cursor:pointer;text-transform:none;letter-spacing:0}
+.checkbox input{width:auto}
+.checkbox.consent{background:transparent;border:0;padding:0;align-items:flex-start;color:var(--muted);font-size:13px;line-height:1.5}
+.hidden{display:none}
+.success{text-align:center;padding:40px 10px}
+.success i{font-size:54px;color:var(--ok)}
+.success h2{font-size:26px;text-transform:uppercase;color:var(--sand);margin:14px 0 8px}
+.success p{color:var(--muted);margin-bottom:22px}
+.note{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin-top:8px}
+
+@media(max-width:560px){
+  .hero{padding:46px 18px 44px}
+  .hero h1{font-size:34px}
+  .page-title{font-size:24px}
+  .topbar .btn{flex:1}
+  nav.menu{justify-content:center}
+  .two{grid-template-columns:1fr}
+}
