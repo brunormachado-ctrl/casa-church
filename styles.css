@@ -70,6 +70,28 @@ nav.menu a:hover{background:var(--teal-soft);color:var(--ink)}
 .card p.txt{font-size:14px;color:var(--muted);margin-bottom:14px}
 .link{color:var(--teal);font-weight:500;font-size:14px}
 
+/* ---- tiles (atalhos que abrem a janela) ---- */
+.tile{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;cursor:pointer;color:var(--ink);transition:.15s;font-family:inherit}
+.tile:hover{border-color:var(--teal);transform:translateY(-1px)}
+.tile .ic{font-size:26px;color:var(--teal);flex:none}
+.tile .tt{font-size:16px;font-weight:500;display:block}
+.tile .sub{font-size:13px;color:var(--muted)}
+.tile .chev{margin-left:auto;color:var(--muted);font-size:20px;flex:none}
+
+/* ---- janela (modal) ---- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:18px;z-index:50;opacity:0;pointer-events:none;transition:.2s}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);max-width:440px;width:100%;max-height:86vh;overflow:auto;padding:24px;transform:translateY(8px);transition:.2s}
+.modal-overlay.show .modal{transform:none}
+.modal-head{display:flex;align-items:center;gap:11px;margin-bottom:18px}
+.modal-head i{font-size:26px;color:var(--teal)}
+.modal-head h2{font-size:20px;text-transform:uppercase;letter-spacing:1px;margin-right:auto}
+.modal-close{background:transparent;border:0;color:var(--muted);font-size:24px;cursor:pointer;line-height:1;padding:2px}
+.modal-close:hover{color:var(--ink)}
+.modal-note{display:flex;gap:10px;align-items:flex-start;background:rgba(207,130,70,.13);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:13px;color:#e7b483}
+.modal-note i{font-size:18px;flex:none}
+.modal-note b{color:var(--sand)}
+
 /* ---- rodapé ---- */
 footer{border-top:1px solid var(--line);background:var(--surface);margin-top:14px}
 .foot{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:20px 0;font-size:12px;color:var(--muted)}

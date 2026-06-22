@@ -24,7 +24,7 @@
           </span>
           <b>Casa <span>Church</span></b>
         </div>
-        <a class="btn" href="cadastro.html?tipo=visitante"><i class="ti ti-hand-love-you"></i>Sou visitante</a>
+        <a class="btn" href="cadastro.html?tipo=visitante"><i class="ti ti-door-enter"></i>Sou visitante</a>
         <a class="btn solid" href="cadastro.html?tipo=membro"><i class="ti ti-user-plus"></i>Fazer cadastro</a>
       </div>
       <nav class="menu" id="menu"></nav>
@@ -64,16 +64,25 @@
     </div>
   </footer>
 
+  <!-- janela (modal) das seções -->
+  <div class="modal-overlay" id="modal" onclick="if(event.target===this)fecharModal()">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <i class="ti" id="modalIcon" aria-hidden="true"></i>
+        <h2 id="modalTitle"></h2>
+        <button class="modal-close" onclick="fecharModal()" aria-label="Fechar"><i class="ti ti-x"></i></button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
   <script src="config.js"></script>
   <script type="module">
     import { getConfig } from './db.js';
     const config = await getConfig();
+    const wa = config.whatsapp ? `https://wa.me/${config.whatsapp}` : '#';
 
-    const menu = document.getElementById("menu");
-    config.cartoes.filter(c=>c.ativo).forEach(c=>{
-      menu.insertAdjacentHTML("beforeend", `<a href="#${c.id}"><i class="ti ${c.icone}"></i>${c.titulo}</a>`);
-    });
-
+    // ---- topo ----
     document.getElementById("kicker").textContent = config.kicker;
     document.getElementById("heroTitle").textContent = config.heroTitulo;
     document.getElementById("heroSub").textContent = config.tagline;
@@ -84,6 +93,7 @@
       il.innerHTML = `<i class="ti ti-brand-instagram"></i>@${config.instagram.usuario}`;
     }
 
+    // ---- próximo culto ----
     (function(){
       const agora = new Date();
       const hoje = agora.getDay(), horaAgora = agora.getHours();
@@ -99,26 +109,70 @@
       }
     })();
 
+    // ---- banner de evento ----
     if(config.eventoEspecial && config.eventoEspecial.ativo){
       document.getElementById("eventBanner").innerHTML =
         `<div class="event"><i class="ti ti-flame"></i><span><strong>${config.eventoEspecial.titulo}</strong> — ${config.eventoEspecial.texto}</span></div>`;
     }
 
-    const cards = document.getElementById("cards");
-    config.cartoes.filter(c=>c.ativo).forEach(c=>{
-      let corpo = "";
+    // ---- teaser de cada atalho ----
+    const teasers = { cultos:"Dias e horários", ministerios:"Conheça e participe", endereco:"Como chegar até nós" };
+    function teaser(c){ return teasers[c.tipo] || (c.texto||"Toque para ver"); }
+
+    // ---- conteúdo da janela ----
+    function corpoDetalhe(c){
       if(c.tipo==="cultos"){
-        corpo = config.cultos.map(s=>`<div class="row"><b>${s.dia} · ${s.nome}</b><span class="t">${s.hora}</span></div>`).join("");
-      } else if(c.tipo==="ministerios"){
-        corpo = `<div class="chips">${config.ministerios.map(m=>`<span class="chip">${m}</span>`).join("")}</div>`;
-      } else if(c.tipo==="endereco"){
-        const q = encodeURIComponent(c.texto||"");
-        corpo = `<iframe class="mapa" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${q}&output=embed"></iframe><p class="txt">${c.texto}</p><a class="link" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${q}">Como chegar →</a>`;
-      } else {
-        corpo = `<p class="txt">${c.texto||""}</p>` + (c.botao?`<button class="btn block" onclick="alert('Ação: ${c.botao}')"><i class="ti ti-brand-whatsapp"></i>${c.botao}</button>`:"");
+        const linhas = config.cultos.map(s=>`<div class="row"><b>${s.dia} · ${s.nome}</b><span class="t">${s.hora}</span></div>`).join("");
+        const ev = (config.eventoEspecial&&config.eventoEspecial.ativo)
+          ? `<div class="modal-note"><i class="ti ti-flame"></i><span><b>${config.eventoEspecial.titulo}</b><br>${config.eventoEspecial.texto}</span></div>` : "";
+        return linhas + ev;
       }
+      if(c.tipo==="ministerios"){
+        return `<p class="txt">Servir é fazer parte. Veja onde você pode somar:</p>
+          <div class="chips">${config.ministerios.map(m=>`<span class="chip">${m}</span>`).join("")}</div>
+          <a class="btn solid block" href="cadastro.html?tipo=membro" style="margin-top:18px"><i class="ti ti-user-plus"></i> Quero servir</a>`;
+      }
+      if(c.tipo==="endereco"){
+        const q = encodeURIComponent(c.texto||"");
+        return `<iframe class="mapa" style="height:200px" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${q}&output=embed"></iframe>
+          <p class="txt">${c.texto}</p>
+          <a class="btn solid block" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${q}"><i class="ti ti-map-pin"></i> Como chegar</a>`;
+      }
+      return `<p class="txt">${c.texto||""}</p>` +
+        (c.botao ? `<a class="btn solid block" target="_blank" rel="noopener" href="${wa}"><i class="ti ti-brand-whatsapp"></i> ${c.botao}</a>` : "");
+    }
+
+    // ---- abrir / fechar janela ----
+    window.abrirModal = function(id){
+      const c = config.cartoes.find(x=>x.id===id);
+      if(!c) return;
+      document.getElementById("modalIcon").className = "ti " + c.icone;
+      document.getElementById("modalTitle").textContent = c.titulo;
+      document.getElementById("modalBody").innerHTML = corpoDetalhe(c);
+      document.getElementById("modal").classList.add("show");
+    };
+    window.fecharModal = function(){ document.getElementById("modal").classList.remove("show"); };
+    document.addEventListener("keydown", e=>{ if(e.key==="Escape") fecharModal(); });
+
+    // ---- monta o menu (abre janela) e os atalhos ----
+    const ativos = config.cartoes.filter(c=>c.ativo);
+    const menu = document.getElementById("menu");
+    ativos.forEach(c=>{
+      const a = document.createElement("a");
+      a.href = "#";
+      a.innerHTML = `<i class="ti ${c.icone}"></i>${c.titulo}`;
+      a.onclick = e=>{ e.preventDefault(); abrirModal(c.id); };
+      menu.appendChild(a);
+    });
+
+    const cards = document.getElementById("cards");
+    ativos.forEach(c=>{
       cards.insertAdjacentHTML("beforeend",
-        `<div class="card" id="${c.id}"><h3><i class="ti ${c.icone}"></i>${c.titulo}</h3>${corpo}</div>`);
+        `<button class="tile" onclick="abrirModal('${c.id}')">
+           <span class="ic"><i class="ti ${c.icone}"></i></span>
+           <span><span class="tt">${c.titulo}</span><span class="sub">${teaser(c)}</span></span>
+           <span class="chev"><i class="ti ti-chevron-right"></i></span>
+         </button>`);
     });
   </script>
 </body>
