@@ -82,6 +82,7 @@
 
   <!-- ====== PAINEL ====== -->
   <div class="container hidden" id="viewPainel" style="max-width:720px">
+    <div id="dashboard"></div>
     <div class="switch-tabs">
       <div class="tab active" id="tabCad" onclick="abaPainel('cad')"><i class="ti ti-users"></i> Cadastros</div>
       <div class="tab" id="tabCfg" onclick="abaPainel('cfg')"><i class="ti ti-settings"></i> Configurar</div>
@@ -274,6 +275,25 @@
       await carregarCadastros();
       cfgAtual = await getConfig();
       preencherConfig(cfgAtual);
+      renderDashboard();
+    }
+
+    async function renderDashboard(){
+      const membros = todosCads.filter(c=>c.tipo==='membro').length;
+      const visitantes = todosCads.filter(c=>c.tipo==='visitante').length;
+      const now=new Date();
+      const novosMes = todosCads.filter(c=>{ const d=new Date(c.criado_em); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); }).length;
+      const anivSemana = todosCads.filter(c=>anivMatch((c.dados||{}).nascimento,'semana')).length;
+      let oracNovas = 0;
+      try{ const { count } = await sb.from('casa_oracoes').select('*',{count:'exact',head:true}).eq('status','novo'); oracNovas = count||0; }catch(e){}
+      const card=(lbl,val,ic)=>`<div style="background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0"><div style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px"><i class="ti ${ic}"></i>${lbl}</div><div style="font-size:24px;font-weight:500;color:var(--ink);margin-top:4px">${val}</div></div>`;
+      $('dashboard').innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px">
+        ${card('Membros',membros,'ti-users')}
+        ${card('Visitantes',visitantes,'ti-door-enter')}
+        ${card('Novos no mês',novosMes,'ti-user-plus')}
+        ${card('Aniv. da semana',anivSemana,'ti-cake')}
+        ${card('Orações novas',oracNovas,'ti-heart')}
+      </div>`;
     }
 
     window.abaPainel = function(qual){
