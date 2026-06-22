@@ -105,6 +105,12 @@
         <div class="field"><label>Frase de abertura (a palavra CASA fica em destaque)</label><input id="c_frase" placeholder="Essa CASA é sua!" /></div>
       </div>
       <div class="secao">
+        <h3>Cultos (dias e horários)</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Aparecem na home e a tela calcula sozinha o "próximo culto".</p>
+        <div id="c_cultos_box"></div>
+        <button class="btn" onclick="addCulto()"><i class="ti ti-plus"></i> Adicionar culto</button>
+      </div>
+      <div class="secao">
         <h3>Evento especial</h3>
         <div class="toggle-row"><span class="lbl">Mostrar a faixa do evento</span><input type="checkbox" id="c_evAtivo" /></div>
         <div class="field" style="margin-top:12px"><label>Título</label><input id="c_evTitulo" /></div>
@@ -185,7 +191,9 @@
     let cfgAtual = null;
     let filtroAtual = 'todos';
     let ministeriosEdit = [];
+    let cultosEdit = [];
     let cadastrosMsg = [];
+    const DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
     const $ = id => document.getElementById(id);
     const labels = {
@@ -427,8 +435,28 @@
       renderMinisterios();
     };
 
+    // ---- editor de cultos ----
+    function renderCultos(){
+      $('c_cultos_box').innerHTML = cultosEdit.map((ct,i)=>{
+        const opc = DIAS_SEMANA.map((d,n)=>`<option value="${n}" ${n===(+ct.diaSemana)?'selected':''}>${d}</option>`).join('');
+        return `<div class="min-card">
+          <div class="two">
+            <div class="field"><label>Dia</label><select onchange="updateCulto(${i},'diaSemana',+this.value)">${opc}</select></div>
+            <div class="field"><label>Horário</label><input value="${(ct.hora||'').replace(/"/g,'&quot;')}" oninput="updateCulto(${i},'hora',this.value)" placeholder="09h30"></div>
+          </div>
+          <div class="field"><label>Nome do culto</label><input value="${(ct.nome||'').replace(/"/g,'&quot;')}" oninput="updateCulto(${i},'nome',this.value)" placeholder="Celebração"></div>
+          <button class="btn rm" onclick="removeCulto(${i})"><i class="ti ti-trash"></i> Remover</button>
+        </div>`;
+      }).join('') || '<p style="font-size:13px;color:var(--muted)">Nenhum culto cadastrado.</p>';
+    }
+    window.updateCulto = (i,campo,val)=>{ cultosEdit[i][campo]=val; };
+    window.addCulto = ()=>{ cultosEdit.push({diaSemana:0, nome:'', hora:''}); renderCultos(); };
+    window.removeCulto = (i)=>{ cultosEdit.splice(i,1); renderCultos(); };
+
     function preencherConfig(c){
       $('c_frase').value = c.fraseAbertura||'';
+      cultosEdit = (c.cultos||[]).map(ct=>({ diaSemana:(typeof ct.diaSemana==='number'?ct.diaSemana:0), nome:ct.nome||'', hora:ct.hora||'' }));
+      renderCultos();
       ministeriosEdit = (c.ministerios||[]).map(m => typeof m==='string'
         ? { nome:m, descricao:'', fotos:[] }
         : { nome:m.nome||'', descricao:m.descricao||'', fotos:Array.isArray(m.fotos)?[...m.fotos]:[] });
@@ -448,6 +476,11 @@
       $('cfgMsg').textContent = '';
       const c = JSON.parse(JSON.stringify(cfgAtual));
       c.fraseAbertura = $('c_frase').value;
+      c.cultos = cultosEdit.map(ct=>{
+        const ds = +ct.diaSemana||0;
+        const h = parseInt(((ct.hora||'').match(/\d{1,2}/)||['0'])[0],10);
+        return { diaSemana:ds, dia:DIAS_SEMANA[ds], nome:(ct.nome||'').trim(), hora:(ct.hora||'').trim(), h24:isNaN(h)?0:h };
+      }).filter(ct=>ct.nome||ct.hora);
       c.eventoEspecial = { ativo:$('c_evAtivo').checked, titulo:$('c_evTitulo').value, texto:$('c_evTexto').value };
       c.ministerios = ministeriosEdit
         .map(m=>({ nome:(m.nome||'').trim(), descricao:(m.descricao||'').trim(), fotos:m.fotos||[] }))
