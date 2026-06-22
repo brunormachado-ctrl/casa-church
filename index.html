@@ -81,11 +81,23 @@
     </div>
   </div>
 
-  <script src="config.js?v=5"></script>
+  <script src="config.js?v=7"></script>
   <script type="module">
     import { getConfig } from './db.js?v=3';
     const config = await getConfig();
     const wa = config.whatsapp ? `https://wa.me/${config.whatsapp}` : '#';
+
+    // foto/banner no topo (se o admin cadastrou)
+    if(config.heroFoto){
+      const h = document.querySelector('.hero');
+      if(h){ h.style.backgroundImage = 'linear-gradient(rgba(10,14,26,.72), rgba(10,14,26,.90)), url("'+config.heroFoto+'")'; h.style.backgroundSize='cover'; h.style.backgroundPosition='center'; }
+    }
+    window.copiarPix = function(btn){
+      const ch = btn.getAttribute('data-pix') || '';
+      const done = ()=>{ btn.innerHTML='<i class="ti ti-check"></i> Copiado!'; setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> Copiar chave PIX', 1800); };
+      if(navigator.clipboard){ navigator.clipboard.writeText(ch).then(done).catch(()=>alert('Copie a chave: '+ch)); }
+      else alert('Copie a chave: '+ch);
+    };
 
     // ---- frase de abertura (estilo manuscrito + CASA em destaque) ----
     (function(){
@@ -150,6 +162,18 @@
         return `<iframe class="mapa" style="height:200px" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${q}&output=embed"></iframe>
           <p class="txt">${c.texto}</p>
           <a class="btn solid block" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${q}"><i class="ti ti-map-pin"></i> Como chegar</a>`;
+      }
+      if(c.tipo==="pix"){
+        const pix = config.pix||{};
+        let corpo = `<p class="txt">${c.texto||""}</p>`;
+        if(pix.chave){
+          corpo += `<div style="background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:monospace;font-size:14px;word-break:break-all;margin-bottom:10px">${pix.chave}</div>
+            <button class="btn solid block" data-pix="${(pix.chave||'').replace(/"/g,'&quot;')}" onclick="copiarPix(this)"><i class="ti ti-copy"></i> Copiar chave PIX</button>`;
+          if(pix.nome) corpo += `<p class="txt" style="margin-top:12px">Favorecido: ${pix.nome}</p>`;
+        } else {
+          corpo += `<p class="txt">A chave PIX ainda não foi cadastrada.</p>`;
+        }
+        return corpo;
       }
       return `<p class="txt">${c.texto||""}</p>` +
         (c.botao ? `<a class="btn solid block" target="_blank" rel="noopener" href="${wa}"><i class="ti ti-brand-whatsapp"></i> ${c.botao}</a>` : "");

@@ -13,6 +13,8 @@ window.CASA = {
 
   instagram: { usuario: "casachurch_", url: "https://www.instagram.com/casachurch_/" },
   whatsapp: "5517900000000", // número da igreja (placeholder) — formato wa.me
+  heroFoto: "", // foto/banner do topo (vazio = fundo padrão). Editável no painel.
+  pix: { chave: "", nome: "" }, // dízimos/ofertas — editável no painel
 
   // Dias: 0=Dom 1=Seg 2=Ter 3=Qua 4=Qui 5=Sex 6=Sáb
   cultos: [
@@ -44,6 +46,6 @@ window.CASA = {
     { id:"ministerios", ativo:true,  tipo:"ministerios", icone:"ti-users-group",      titulo:"Ministérios" },
     { id:"endereco",    ativo:true,  tipo:"endereco",    icone:"ti-map-pin",          titulo:"Endereço", texto:"Estrada do Mineiro, 575 — Penápolis-SP, 16303-330" },
     { id:"atendimento", ativo:true,  tipo:"texto",       icone:"ti-heart-handshake",  titulo:"Atendimento pastoral", texto:"Precisa de oração ou conversa? Fale com a gente.", botao:"Falar com o pastor" },
-    { id:"dizimos",     ativo:false, tipo:"texto",       icone:"ti-gift",             titulo:"Dízimos e ofertas", texto:"Contribua com a obra. Chave PIX e dados aqui.", botao:"Ver como contribuir" }
+    { id:"dizimos",     ativo:false, tipo:"pix",         icone:"ti-gift",             titulo:"Dízimos e ofertas", texto:"Sua contribuição abençoa e sustenta a obra. 🤍 Use a chave PIX abaixo:" }
   ]
 };

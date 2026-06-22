@@ -1,10 +1,10 @@
 /* Casa Church — service worker (deixa o site instalável + funciona offline o básico).
    Estratégia "rede primeiro": sempre tenta a versão mais nova; se estiver sem
    internet, usa o que tiver guardado. Assim nunca trava em versão antiga. */
-const CACHE = 'casa-v2';
+const CACHE = 'casa-v3';
 const ASSETS = [
   './', './index.html', './cadastro.html', './admin.html',
-  './styles.css?v=6', './config.js?v=5', './db.js',
+  './styles.css?v=6', './config.js?v=7', './db.js',
   './icon-192.png', './icon-512.png', './manifest.webmanifest',
   './logo-emblema.png', './logo-completa.png', './logo-horizontal.png'
 ];

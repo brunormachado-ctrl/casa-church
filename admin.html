@@ -123,6 +123,11 @@
         <button class="btn" onclick="addCulto()"><i class="ti ti-plus"></i> Adicionar culto</button>
       </div>
       <div class="secao">
+        <h3>Foto do topo (banner)</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Aparece atrás da logo no topo da home. Sem foto, fica o fundo azul padrão.</p>
+        <div id="heroFotoBox"></div>
+      </div>
+      <div class="secao">
         <h3>Evento especial</h3>
         <div class="toggle-row"><span class="lbl">Mostrar a faixa do evento</span><input type="checkbox" id="c_evAtivo" /></div>
         <div class="field" style="margin-top:12px"><label>Título</label><input id="c_evTitulo" /></div>
@@ -143,6 +148,8 @@
         <div class="field"><label>Endereço</label><input id="c_endereco" /></div>
         <div class="field"><label>Instagram (usuário, sem @)</label><input id="c_instaUser" /></div>
         <div class="field"><label>WhatsApp da igreja (só números, com DDI 55)</label><input id="c_whatsapp" /></div>
+        <div class="field"><label>Chave PIX (dízimos/ofertas)</label><input id="c_pixChave" placeholder="CPF, telefone, e-mail ou chave aleatória" /></div>
+        <div class="field"><label>Favorecido do PIX (nome)</label><input id="c_pixNome" /></div>
       </div>
       <div class="secao">
         <h3>Suporte (aparece só no painel)</h3>
@@ -219,7 +226,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=5"></script>
+  <script src="config.js?v=7"></script>
   <script type="module">
     import { sb, getConfig, salvarConfig } from './db.js?v=3';
 
@@ -230,6 +237,7 @@
     let buscaCad = '';
     let ministeriosEdit = [];
     let cultosEdit = [];
+    let heroFotoEdit = '';
     let cadastrosMsg = [];
     const DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
@@ -638,6 +646,29 @@
       renderMinisterios();
     };
 
+    // ---- foto do topo ----
+    function renderHeroFoto(){
+      $('heroFotoBox').innerHTML =
+        (heroFotoEdit ? `<img src="${heroFotoEdit}" style="width:100%;max-height:170px;object-fit:cover;border-radius:12px;border:1px solid var(--line);margin-bottom:10px">`
+                      : `<p style="font-size:13px;color:var(--muted);margin-bottom:10px">Sem foto (fundo azul padrão).</p>`)
+        + `<div style="display:flex;gap:8px;flex-wrap:wrap">
+             <label class="btn foto-add"><i class="ti ti-upload"></i> ${heroFotoEdit?'Trocar foto':'Adicionar foto'}<input type="file" accept="image/*" hidden onchange="uploadHeroFoto(this)"></label>
+             ${heroFotoEdit?'<button class="btn rm" onclick="removerHeroFoto()"><i class="ti ti-trash"></i> Remover</button>':''}
+           </div>`;
+    }
+    window.uploadHeroFoto = async function(input){
+      const file = input.files[0]; input.value=''; if(!file) return;
+      try{
+        const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+        const path=`hero/${Date.now()}-${Math.round(Math.random()*1e6)}.${ext}`;
+        const { error } = await sb.storage.from('casa-fotos').upload(path, file, { contentType:file.type });
+        if(error) throw error;
+        heroFotoEdit = sb.storage.from('casa-fotos').getPublicUrl(path).data.publicUrl;
+        renderHeroFoto();
+      }catch(e){ alert('Erro ao subir a foto: '+e.message); }
+    };
+    window.removerHeroFoto = function(){ heroFotoEdit=''; renderHeroFoto(); };
+
     // ---- editor de cultos ----
     function renderCultos(){
       $('c_cultos_box').innerHTML = cultosEdit.map((ct,i)=>{
@@ -671,6 +702,10 @@
       $('c_instaUser').value = c.instagram?.usuario||'';
       $('c_whatsapp').value = c.whatsapp||'';
       $('c_suporte').value = c.suporteAdmin||'';
+      $('c_pixChave').value = c.pix?.chave||'';
+      $('c_pixNome').value = c.pix?.nome||'';
+      heroFotoEdit = c.heroFoto||'';
+      renderHeroFoto();
       $('c_cartoes').innerHTML = (c.cartoes||[]).map((ct,i)=>
         `<div class="toggle-row"><span class="lbl">${ct.titulo}</span><input type="checkbox" data-i="${i}" ${ct.ativo?'checked':''}></div>`).join('');
     }
@@ -691,6 +726,8 @@
       c.instagram = { usuario:$('c_instaUser').value.replace('@',''), url:'https://www.instagram.com/'+$('c_instaUser').value.replace('@','')+'/' };
       c.whatsapp = $('c_whatsapp').value.replace(/\D/g,'');
       c.suporteAdmin = $('c_suporte').value;
+      c.heroFoto = heroFotoEdit;
+      c.pix = { chave: $('c_pixChave').value.trim(), nome: $('c_pixNome').value.trim() };
       document.querySelectorAll('#c_cartoes input').forEach(inp=>{ c.cartoes[+inp.dataset.i].ativo = inp.checked; });
       const end = (c.cartoes||[]).find(x=>x.id==='endereco'); if(end) end.texto = $('c_endereco').value;
       try{
