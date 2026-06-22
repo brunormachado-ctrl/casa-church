@@ -15,6 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="styles.css?v=6" />
   <style>
     .login{max-width:380px;margin:40px auto;padding:0 18px}
@@ -92,9 +93,13 @@
     <div id="paneCad">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <button class="btn solid" onclick="novoCadastro()"><i class="ti ti-user-plus"></i> Cadastrar pessoa</button>
-        <button class="btn" onclick="exportarCSV()"><i class="ti ti-download"></i> Exportar (planilha)</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" onclick="mostrarQR()"><i class="ti ti-qrcode"></i> QR do cadastro</button>
+          <button class="btn" onclick="exportarCSV()"><i class="ti ti-download"></i> Exportar</button>
+        </div>
       </div>
       <div id="novoCadBox"></div>
+      <div id="qrBox"></div>
       <div class="field" style="margin-bottom:12px"><input id="buscaCad" placeholder="Buscar por nome ou WhatsApp…" oninput="buscarCad(this.value)"></div>
       <div class="filtros" id="filtros">
         <span class="filtro on" data-f="todos" onclick="filtrar(this)">Todos</span>
@@ -481,6 +486,28 @@
         <div class="acoes">${btnAprovar}<button class="btn" onclick="editarCadastro('${c.id}')"><i class="ti ti-edit"></i> Editar</button><button class="btn rm" onclick="excluir('${c.id}','${c.nome.replace(/'/g,"")}')"><i class="ti ti-trash"></i> Excluir</button></div>
       </div>`;
     }
+
+    window.mostrarQR = function(){
+      const box = $('qrBox');
+      if(box.innerHTML.trim()){ box.innerHTML=''; return; }
+      const url = location.href.replace(/admin\.html.*$/, 'cadastro.html');
+      box.innerHTML = `<div class="cad" style="text-align:center">
+        <h3 style="font-size:15px;text-transform:uppercase;letter-spacing:1px;color:var(--sand);margin-bottom:12px">QR Code do cadastro</h3>
+        <div id="qrcode" style="display:inline-block;background:#fff;padding:14px;border-radius:14px"></div>
+        <p style="font-size:12px;color:var(--muted);margin:12px 0 4px;word-break:break-all">${url}</p>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Projete no culto ou imprima no mural. Quem apontar a câmera cai direto no cadastro.</p>
+        <div class="acoes" style="justify-content:center"><button class="btn solid" onclick="baixarQR()"><i class="ti ti-download"></i> Baixar imagem</button><button class="btn" onclick="mostrarQR()">Fechar</button></div>
+      </div>`;
+      if(typeof QRCode!=='undefined'){ new QRCode(document.getElementById('qrcode'), { text:url, width:200, height:200, colorDark:'#0a0e1a', colorLight:'#ffffff' }); }
+      else { document.getElementById('qrcode').textContent='(biblioteca do QR não carregou — verifique a internet)'; }
+      box.scrollIntoView({block:'center'});
+    };
+    window.baixarQR = function(){
+      const c = document.querySelector('#qrcode canvas'); const img = document.querySelector('#qrcode img');
+      const url = c ? c.toDataURL('image/png') : (img ? img.src : null);
+      if(!url) return;
+      const a=document.createElement('a'); a.href=url; a.download='qr-cadastro-casa-church.png'; a.click();
+    };
 
     window.novoCadastro = function(){
       const box = $('novoCadBox');
