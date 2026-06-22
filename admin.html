@@ -186,7 +186,15 @@
         <h3>Enviar para um grupo</h3>
         <div class="field"><label>Para quem?</label><select id="msgGrupo" onchange="atualizarGrupo()"></select></div>
         <div class="field"><label>Modelo pronto (opcional)</label><select id="msgModelo" onchange="aplicarModelo()"></select></div>
-        <div class="field"><label>Mensagem</label><textarea id="msgTexto" style="min-height:130px" placeholder="Escreva o recado aqui…"></textarea></div>
+        <div class="field">
+          <label><i class="ti ti-sparkles" style="color:var(--sand)"></i> Escrever com IA (opcional)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="iaPedido" placeholder="Ex: convite carinhoso pro culto de domingo" style="flex:1;min-width:170px">
+            <button class="btn" onclick="escreverIA()"><i class="ti ti-wand"></i> Gerar</button>
+          </div>
+          <div class="ok-msg" id="iaMsg" style="font-size:12px;min-height:16px"></div>
+        </div>
+        <div class="field"><label>Mensagem</label><textarea id="msgTexto" style="min-height:130px" placeholder="Escreva o recado aqui… ou gere com a IA acima"></textarea></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
           <button class="btn" onclick="copiarTexto(document.getElementById('msgTexto').value,'Mensagem copiada!')"><i class="ti ti-copy"></i> Copiar mensagem</button>
           <button class="btn" onclick="copiarNumeros()"><i class="ti ti-phone"></i> Copiar números (<span id="grpCount">0</span>)</button>
@@ -364,6 +372,21 @@
         conv.map(c=>linha(c, `${(c.nome||'').split(' ')[0]}, hoje é um dia muito especial! 🎉 É o aniversário da sua decisão de seguir Jesus. A Casa Church celebra essa vida com você! 🤍`)).join(''); }
       $('hojeBox').innerHTML = html || '<p class="empty" style="padding:10px">Nenhum aniversário hoje. 🌤️</p>';
     }
+
+    window.escreverIA = async function(){
+      const m = $('iaMsg'); m.className='ok-msg'; m.textContent='';
+      const pedido = $('iaPedido').value.trim();
+      if(!pedido){ m.className='err'; m.textContent='Diga o que a IA deve escrever.'; return; }
+      m.className='ok-msg'; m.textContent='Escrevendo…';
+      const { data, error } = await sb.functions.invoke('escrever-mensagem', { body:{ pedido } });
+      if(error || !data || !data.ok){
+        m.className='err'; m.textContent = (data && data.error) || (error && error.message) || 'Não deu certo.';
+        return;
+      }
+      $('msgTexto').value = data.texto;
+      atualizarGrupo();
+      m.className='ok-msg'; m.textContent='Pronto! Ajuste como quiser. ✔';
+    };
 
     async function carregarMensagens(){
       const selM = $('msgModelo');
