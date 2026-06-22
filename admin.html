@@ -77,7 +77,8 @@
   <div class="container hidden" id="viewPainel" style="max-width:720px">
     <div class="switch-tabs">
       <div class="tab active" id="tabCad" onclick="abaPainel('cad')"><i class="ti ti-users"></i> Cadastros</div>
-      <div class="tab" id="tabCfg" onclick="abaPainel('cfg')"><i class="ti ti-settings"></i> Configurar site</div>
+      <div class="tab" id="tabCfg" onclick="abaPainel('cfg')"><i class="ti ti-settings"></i> Configurar</div>
+      <div class="tab" id="tabAdmins" onclick="abaPainel('admins')"><i class="ti ti-shield-lock"></i> Acessos</div>
     </div>
 
     <!-- Cadastros -->
@@ -119,8 +120,34 @@
         <div class="field"><label>Instagram (usuário, sem @)</label><input id="c_instaUser" /></div>
         <div class="field"><label>WhatsApp da igreja (só números, com DDI 55)</label><input id="c_whatsapp" /></div>
       </div>
+      <div class="secao">
+        <h3>Suporte (aparece só no painel)</h3>
+        <div class="field"><label>Quem montou e doou o site — nome e telefone</label><input id="c_suporte" placeholder="Bruno R. Machado · (17) 90000-0000" /></div>
+      </div>
       <button class="btn solid block lg" onclick="salvar()"><i class="ti ti-device-floppy"></i> Salvar alterações</button>
       <div class="ok-msg" id="cfgMsg"></div>
+    </div>
+
+    <!-- Acessos / Administradores -->
+    <div id="paneAdmins" class="hidden">
+      <div class="secao">
+        <h3><i class="ti ti-lifebuoy" style="color:var(--teal)"></i> Precisa de ajuda com o site?</h3>
+        <p style="font-size:15px;color:var(--ink);margin-bottom:4px" id="suporteInfo">—</p>
+        <p style="font-size:12px;color:var(--muted)">Esta é a pessoa que montou e doou o site. Fale com ela em caso de dúvida.</p>
+      </div>
+      <div class="secao">
+        <h3>Quem tem acesso ao painel</h3>
+        <div id="listaAdmins"><p class="empty">Carregando…</p></div>
+      </div>
+      <div class="secao">
+        <h3>Adicionar administrador</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Crie um login para o pastor ou alguém de confiança. Passe o e-mail e a senha pra pessoa — ela troca depois.</p>
+        <div class="field"><label>Nome</label><input id="a_nome" placeholder="Nome da pessoa"></div>
+        <div class="field"><label>E-mail (será o login)</label><input id="a_email" type="email" placeholder="pessoa@exemplo.com"></div>
+        <div class="field"><label>Senha inicial (mínimo 6 caracteres)</label><input id="a_senha" type="text" placeholder="senha que você vai passar pra pessoa"></div>
+        <button class="btn solid block lg" onclick="addAdmin()"><i class="ti ti-user-plus"></i> Adicionar administrador</button>
+        <div class="ok-msg" id="adminMsg"></div>
+      </div>
     </div>
   </div>
 
@@ -157,11 +184,48 @@
     }
 
     window.abaPainel = function(qual){
-      const cad = qual==='cad';
-      $('tabCad').classList.toggle('active', cad);
-      $('tabCfg').classList.toggle('active', !cad);
-      $('paneCad').classList.toggle('hidden', !cad);
-      $('paneCfg').classList.toggle('hidden', cad);
+      $('tabCad').classList.toggle('active', qual==='cad');
+      $('tabCfg').classList.toggle('active', qual==='cfg');
+      $('tabAdmins').classList.toggle('active', qual==='admins');
+      $('paneCad').classList.toggle('hidden', qual!=='cad');
+      $('paneCfg').classList.toggle('hidden', qual!=='cfg');
+      $('paneAdmins').classList.toggle('hidden', qual!=='admins');
+      if(qual==='admins') carregarAdmins();
+    };
+
+    async function carregarAdmins(){
+      $('suporteInfo').textContent = (cfgAtual && cfgAtual.suporteAdmin) ? cfgAtual.suporteAdmin : 'Não preenchido (preencha em Configurar → Suporte).';
+      const box = $('listaAdmins');
+      const { data, error } = await sb.from('casa_admins').select('user_id,email,criado_em').order('criado_em');
+      if(error){ box.innerHTML = `<p class="empty">Erro: ${error.message}</p>`; return; }
+      const meu = (await sb.auth.getUser()).data.user?.id;
+      box.innerHTML = (data||[]).map(a=>{
+        const eu = a.user_id===meu;
+        const remover = eu ? '' : `<button class="btn rm" onclick="removeAdmin('${a.user_id}','${(a.email||'').replace(/'/g,'')}')"><i class="ti ti-trash"></i> Remover</button>`;
+        return `<div class="cad" style="display:flex;align-items:center;gap:10px"><span style="margin-right:auto">${a.email||a.user_id}${eu?' <span class="badge b-aprov">você</span>':''}</span>${remover}</div>`;
+      }).join('') || '<p class="empty">Nenhum administrador.</p>';
+    }
+
+    window.addAdmin = async function(){
+      const msg = $('adminMsg'); msg.className='ok-msg'; msg.textContent='';
+      const nome = $('a_nome').value.trim(), email = $('a_email').value.trim(), senha = $('a_senha').value;
+      if(!email || !senha){ msg.className='err'; msg.textContent='Preencha e-mail e senha.'; return; }
+      msg.textContent='Criando…';
+      const { data, error } = await sb.functions.invoke('criar-admin', { body:{ nome, email, senha } });
+      if(error || !data || !data.ok){
+        msg.className='err'; msg.textContent='Não deu certo: ' + ((data && data.error) || (error && error.message) || 'erro desconhecido');
+        return;
+      }
+      $('a_nome').value=''; $('a_email').value=''; $('a_senha').value='';
+      msg.className='ok-msg'; msg.textContent='Administrador adicionado! ✔';
+      carregarAdmins();
+    };
+
+    window.removeAdmin = async function(userId, email){
+      if(!confirm(`Remover o acesso de ${email||'este administrador'}? Ele não conseguirá mais entrar no painel.`)) return;
+      const { error } = await sb.from('casa_admins').delete().eq('user_id', userId);
+      if(error){ alert('Erro: '+error.message); return; }
+      carregarAdmins();
     };
 
     window.filtrar = function(el){
@@ -263,6 +327,7 @@
       $('c_endereco').value = (c.cartoes||[]).find(x=>x.id==='endereco')?.texto||'';
       $('c_instaUser').value = c.instagram?.usuario||'';
       $('c_whatsapp').value = c.whatsapp||'';
+      $('c_suporte').value = c.suporteAdmin||'';
       $('c_cartoes').innerHTML = (c.cartoes||[]).map((ct,i)=>
         `<div class="toggle-row"><span class="lbl">${ct.titulo}</span><input type="checkbox" data-i="${i}" ${ct.ativo?'checked':''}></div>`).join('');
     }
@@ -277,6 +342,7 @@
         .filter(m=>m.nome);
       c.instagram = { usuario:$('c_instaUser').value.replace('@',''), url:'https://www.instagram.com/'+$('c_instaUser').value.replace('@','')+'/' };
       c.whatsapp = $('c_whatsapp').value.replace(/\D/g,'');
+      c.suporteAdmin = $('c_suporte').value;
       document.querySelectorAll('#c_cartoes input').forEach(inp=>{ c.cartoes[+inp.dataset.i].ativo = inp.checked; });
       const end = (c.cartoes||[]).find(x=>x.id==='endereco'); if(end) end.texto = $('c_endereco').value;
       try{
