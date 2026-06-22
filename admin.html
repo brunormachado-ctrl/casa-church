@@ -90,9 +90,11 @@
 
     <!-- Cadastros -->
     <div id="paneCad">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn solid" onclick="novoCadastro()"><i class="ti ti-user-plus"></i> Cadastrar pessoa</button>
         <button class="btn" onclick="exportarCSV()"><i class="ti ti-download"></i> Exportar (planilha)</button>
       </div>
+      <div id="novoCadBox"></div>
       <div class="filtros" id="filtros">
         <span class="filtro on" data-f="todos" onclick="filtrar(this)">Todos</span>
         <span class="filtro" data-f="pendente" onclick="filtrar(this)">Pendentes</span>
@@ -466,6 +468,52 @@
         <div class="acoes">${btnAprovar}<button class="btn" onclick="editarCadastro('${c.id}')"><i class="ti ti-edit"></i> Editar</button><button class="btn rm" onclick="excluir('${c.id}','${c.nome.replace(/'/g,"")}')"><i class="ti ti-trash"></i> Excluir</button></div>
       </div>`;
     }
+
+    window.novoCadastro = function(){
+      const box = $('novoCadBox');
+      if(box.innerHTML.trim()){ box.innerHTML=''; return; }
+      const mins = ((cfgAtual&&cfgAtual.ministerios)||[]).map(m=>{ const n=typeof m==='string'?m:m.nome;
+        return `<label class="checkbox"><input type="checkbox" value="${(n||'').replace(/"/g,'&quot;')}"> ${n}</label>`; }).join('');
+      box.innerHTML = `<div class="cad">
+        <h3 style="font-size:15px;text-transform:uppercase;letter-spacing:1px;color:var(--sand);margin-bottom:14px">Novo cadastro</h3>
+        <div class="two">
+          <div class="field"><label>Tipo</label><select id="nc_tipo"><option value="membro">Membro</option><option value="visitante">Visitante</option></select></div>
+          <div class="field"><label>Situação</label><select id="nc_status"><option value="aprovado">Aprovado</option><option value="pendente">Pendente</option></select></div>
+        </div>
+        <div class="field"><label>Nome completo</label><input id="nc_nome" placeholder="Nome"></div>
+        <div class="field"><label>WhatsApp</label><input id="nc_wa" placeholder="(00) 00000-0000"></div>
+        <div class="two">
+          <div class="field"><label>Nascimento</label><input id="nc_nasc" type="date"></div>
+          <div class="field"><label>Aceitou Jesus em</label><input id="nc_conv" type="date"></div>
+        </div>
+        <div class="field"><label>Endereço / bairro</label><input id="nc_end"></div>
+        <div class="two">
+          <div class="field"><label>Batizado?</label><select id="nc_bat"><option value="">—</option><option>Sim, já fui batizado</option><option>Ainda não</option></select></div>
+          <div class="field"><label>É membro há quanto tempo?</label><select id="nc_tempo"><option value="">—</option><option>Estou chegando agora</option><option>Menos de 6 meses</option><option>De 6 meses a 1 ano</option><option>De 1 a 3 anos</option><option>Mais de 3 anos</option></select></div>
+        </div>
+        ${mins?`<div class="field"><label>Serve em ministério(s)</label><div class="checks" id="nc_mins">${mins}</div></div>`:''}
+        <div class="field"><label>Observações</label><textarea id="nc_obs"></textarea></div>
+        <div class="acoes"><button class="btn solid" onclick="salvarNovo()"><i class="ti ti-check"></i> Salvar cadastro</button><button class="btn" onclick="novoCadastro()">Cancelar</button></div>
+        <div class="err" id="nc_msg"></div>
+      </div>`;
+      box.scrollIntoView({block:'start'});
+    };
+    window.salvarNovo = async function(){
+      const m = $('nc_msg'); m.className='err'; m.textContent='';
+      const nome = $('nc_nome').value.trim(), wa = $('nc_wa').value.trim();
+      if(!nome || !wa){ m.textContent='Preencha pelo menos o nome e o WhatsApp.'; return; }
+      const dados = {};
+      const set=(k,v)=>{ if(v) dados[k]=v; };
+      set('nascimento',$('nc_nasc').value); set('conversao',$('nc_conv').value); set('endereco',$('nc_end').value);
+      set('batizado',$('nc_bat').value); set('tempoMembro',$('nc_tempo').value); set('obs',$('nc_obs').value);
+      const mins=[...document.querySelectorAll('#nc_mins input:checked')].map(c=>c.value);
+      if(mins.length){ dados.ministerios=mins; dados.serve='sim'; }
+      const reg = { tipo:$('nc_tipo').value, nome, whatsapp:wa, dados, status:$('nc_status').value };
+      const { error } = await sb.from('casa_cadastros').insert(reg);
+      if(error){ m.textContent='Erro: '+error.message; return; }
+      $('novoCadBox').innerHTML='';
+      carregarCadastros();
+    };
 
     window.editarCadastro = function(id){
       const c = cadById[id]; if(!c) return;
