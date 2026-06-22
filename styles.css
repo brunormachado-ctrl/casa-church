@@ -95,6 +95,12 @@ nav.menu a:hover{background:var(--teal-soft);color:var(--ink)}
 .modal-note{display:flex;gap:10px;align-items:flex-start;background:rgba(207,130,70,.13);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:13px;color:#e7b483}
 .modal-note i{font-size:18px;flex:none}
 .modal-note b{color:var(--sand)}
+.min-lista{display:flex;flex-direction:column;gap:8px;margin:6px 0}
+.min-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;color:var(--ink);font-family:inherit;font-size:15px}
+.min-item:hover{border-color:var(--teal)}
+.min-item i{color:var(--muted);font-size:18px}
+.galeria{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px}
+.galeria img{height:150px;border-radius:12px;border:1px solid var(--line);flex:none;object-fit:cover}
 
 /* ---- rodapé ---- */
 footer{border-top:1px solid var(--line);background:var(--surface);margin-top:14px}

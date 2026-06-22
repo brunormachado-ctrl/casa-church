@@ -213,7 +213,8 @@
     import { getConfig } from './db.js';
     const c = await getConfig();
     document.getElementById("listaMinisterios").innerHTML =
-      (c.ministerios||[]).map(m=>`<label class="checkbox"><input type="checkbox" name="ministerio" value="${m}"> ${m}</label>`).join("");
+      (c.ministerios||[]).map(m=>{ const nome = typeof m==="string" ? m : m.nome;
+        return `<label class="checkbox"><input type="checkbox" name="ministerio" value="${nome}"> ${nome}</label>`; }).join("");
   </script>
 </body>
 </html>

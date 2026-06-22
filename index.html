@@ -130,8 +130,12 @@
         return linhas + ev;
       }
       if(c.tipo==="ministerios"){
-        return `<p class="txt">Servir é fazer parte. Veja onde você pode somar:</p>
-          <div class="chips">${config.ministerios.map(m=>`<span class="chip">${m}</span>`).join("")}</div>
+        const itens = config.ministerios.map((m,i)=>{
+          const nome = typeof m==="string" ? m : m.nome;
+          return `<button class="min-item" onclick="abrirMinisterio(${i})"><span>${nome}</span><i class="ti ti-chevron-right"></i></button>`;
+        }).join("");
+        return `<p class="txt">Servir é fazer parte. Toque num ministério pra conhecer:</p>
+          <div class="min-lista">${itens}</div>
           <a class="btn solid block" href="cadastro.html?tipo=membro" style="margin-top:18px"><i class="ti ti-user-plus"></i> Quero servir</a>`;
       }
       if(c.tipo==="endereco"){
@@ -151,6 +155,21 @@
       document.getElementById("modalIcon").className = "ti " + c.icone;
       document.getElementById("modalTitle").textContent = c.titulo;
       document.getElementById("modalBody").innerHTML = corpoDetalhe(c);
+      document.getElementById("modal").classList.add("show");
+    };
+    window.abrirMinisterio = function(i){
+      const m = config.ministerios[i];
+      if(!m) return;
+      const nome = typeof m==="string" ? m : m.nome;
+      const desc = (typeof m==="object" && m.descricao) ? m.descricao : "";
+      const fotos = (typeof m==="object" && Array.isArray(m.fotos)) ? m.fotos : [];
+      document.getElementById("modalIcon").className = "ti ti-users-group";
+      document.getElementById("modalTitle").textContent = nome;
+      const galeria = fotos.length ? `<div class="galeria">${fotos.map(f=>`<img src="${f}" alt="${nome}" loading="lazy">`).join("")}</div>` : "";
+      document.getElementById("modalBody").innerHTML =
+        `${galeria}<p class="txt">${desc||"Em breve mais informações sobre este ministério."}</p>
+         <button class="btn block" onclick="abrirModal('ministerios')" style="margin-bottom:8px"><i class="ti ti-arrow-left"></i> Todos os ministérios</button>
+         <a class="btn solid block" href="cadastro.html?tipo=membro"><i class="ti ti-user-plus"></i> Quero servir</a>`;
       document.getElementById("modal").classList.add("show");
     };
     window.fecharModal = function(){ document.getElementById("modal").classList.remove("show"); };

@@ -35,6 +35,13 @@
     .toggle-row .lbl{margin-right:auto;font-size:14px}
     .switch-tabs{display:flex;gap:8px;margin-bottom:20px}
     .empty{text-align:center;color:var(--muted);padding:40px 10px}
+    .min-card{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+    .fotos-grid{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+    .foto-thumb{position:relative;width:84px;height:60px}
+    .foto-thumb img{width:84px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+    .foto-thumb button{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;background:var(--danger);color:#fff;border:0;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center}
+    .foto-add{display:inline-flex;cursor:pointer;font-size:13px;padding:8px 13px}
+    .min-card .rm{color:var(--danger);border-color:rgba(225,101,79,.4)}
   </style>
 </head>
 <body>
@@ -98,7 +105,9 @@
       </div>
       <div class="secao">
         <h3>Ministérios</h3>
-        <div class="field"><label>Um por linha</label><textarea id="c_ministerios" style="min-height:120px"></textarea></div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Cada ministério tem nome, explicação e fotos. As fotos sobem na hora; lembre de clicar em <b style="color:var(--ink)">Salvar alterações</b> no fim.</p>
+        <div id="c_min_box"></div>
+        <button class="btn" onclick="addMinisterio()"><i class="ti ti-plus"></i> Adicionar ministério</button>
       </div>
       <div class="secao">
         <h3>Seções que aparecem no site</h3>
@@ -121,6 +130,7 @@
 
     let cfgAtual = null;
     let filtroAtual = 'todos';
+    let ministeriosEdit = [];
 
     const $ = id => document.getElementById(id);
     const labels = {
@@ -206,12 +216,50 @@
       carregarCadastros();
     };
 
+    // ---- editor de ministérios ----
+    function renderMinisterios(){
+      $('c_min_box').innerHTML = ministeriosEdit.map((m,i)=>{
+        const fotos = (m.fotos||[]).map((f,j)=>
+          `<div class="foto-thumb"><img src="${f}" alt=""><button onclick="removeFotoMin(${i},${j})" aria-label="Remover foto">&times;</button></div>`).join('');
+        return `<div class="min-card">
+          <div class="field"><label>Nome</label><input value="${(m.nome||'').replace(/"/g,'&quot;')}" oninput="updateMin(${i},'nome',this.value)"></div>
+          <div class="field"><label>Explicação</label><textarea oninput="updateMin(${i},'descricao',this.value)">${m.descricao||''}</textarea></div>
+          <label style="font-size:13px;color:var(--muted)">Fotos</label>
+          <div class="fotos-grid">${fotos||'<span style="font-size:13px;color:var(--muted)">Nenhuma foto ainda.</span>'}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <label class="btn foto-add"><i class="ti ti-upload"></i> Adicionar foto<input type="file" accept="image/*" multiple hidden onchange="uploadFotoMin(${i},this)"></label>
+            <button class="btn rm" onclick="removeMinisterio(${i})"><i class="ti ti-trash"></i> Remover</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    window.updateMin = (i,campo,val)=>{ ministeriosEdit[i][campo] = val; };
+    window.addMinisterio = ()=>{ ministeriosEdit.push({nome:'Novo ministério', descricao:'', fotos:[]}); renderMinisterios(); };
+    window.removeMinisterio = (i)=>{ if(confirm('Remover este ministério?')){ ministeriosEdit.splice(i,1); renderMinisterios(); } };
+    window.removeFotoMin = (i,j)=>{ ministeriosEdit[i].fotos.splice(j,1); renderMinisterios(); };
+    window.uploadFotoMin = async (i,input)=>{
+      const files = [...input.files]; input.value='';
+      for(const file of files){
+        try{
+          const ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+          const path = `ministerios/${Date.now()}-${Math.round(Math.random()*1e6)}.${ext}`;
+          const { error } = await sb.storage.from('casa-fotos').upload(path, file, { contentType:file.type });
+          if(error) throw error;
+          ministeriosEdit[i].fotos.push(sb.storage.from('casa-fotos').getPublicUrl(path).data.publicUrl);
+        }catch(e){ alert('Erro ao subir a foto: '+e.message); }
+      }
+      renderMinisterios();
+    };
+
     function preencherConfig(c){
       $('c_frase').value = c.fraseAbertura||'';
+      ministeriosEdit = (c.ministerios||[]).map(m => typeof m==='string'
+        ? { nome:m, descricao:'', fotos:[] }
+        : { nome:m.nome||'', descricao:m.descricao||'', fotos:Array.isArray(m.fotos)?[...m.fotos]:[] });
+      renderMinisterios();
       $('c_evAtivo').checked = !!(c.eventoEspecial&&c.eventoEspecial.ativo);
       $('c_evTitulo').value = c.eventoEspecial?.titulo||'';
       $('c_evTexto').value = c.eventoEspecial?.texto||'';
-      $('c_ministerios').value = (c.ministerios||[]).join('\n');
       $('c_endereco').value = (c.cartoes||[]).find(x=>x.id==='endereco')?.texto||'';
       $('c_instaUser').value = c.instagram?.usuario||'';
       $('c_whatsapp').value = c.whatsapp||'';
@@ -224,7 +272,9 @@
       const c = JSON.parse(JSON.stringify(cfgAtual));
       c.fraseAbertura = $('c_frase').value;
       c.eventoEspecial = { ativo:$('c_evAtivo').checked, titulo:$('c_evTitulo').value, texto:$('c_evTexto').value };
-      c.ministerios = $('c_ministerios').value.split('\n').map(s=>s.trim()).filter(Boolean);
+      c.ministerios = ministeriosEdit
+        .map(m=>({ nome:(m.nome||'').trim(), descricao:(m.descricao||'').trim(), fotos:m.fotos||[] }))
+        .filter(m=>m.nome);
       c.instagram = { usuario:$('c_instaUser').value.replace('@',''), url:'https://www.instagram.com/'+$('c_instaUser').value.replace('@','')+'/' };
       c.whatsapp = $('c_whatsapp').value.replace(/\D/g,'');
       document.querySelectorAll('#c_cartoes input').forEach(inp=>{ c.cartoes[+inp.dataset.i].ativo = inp.checked; });

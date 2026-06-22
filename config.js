@@ -27,7 +27,16 @@ window.CASA = {
     texto: "21 a 27 de julho · cultos todas as noites às 19h30"
   },
 
-  ministerios: ["Louvor", "Kids", "Recepção", "Intercessão", "Casais", "Diaconato"],
+  // Cada ministério tem nome, uma explicação e fotos (tudo editável no painel).
+  // As fotos abaixo são EXEMPLO (picsum) — o pastor troca pelas reais no admin.
+  ministerios: [
+    { nome:"Louvor", descricao:"Conduzimos a igreja na adoração a Deus por meio da música. Se você canta ou toca um instrumento, há lugar pra você servir com seu dom.", fotos:["https://picsum.photos/seed/louvor1/640/420","https://picsum.photos/seed/louvor2/640/420"] },
+    { nome:"Kids", descricao:"Cuidamos das crianças com amor e ensino bíblico enquanto os pais participam do culto. Um espaço seguro, alegre e cheio de Jesus.", fotos:["https://picsum.photos/seed/kids1/640/420","https://picsum.photos/seed/kids2/640/420"] },
+    { nome:"Recepção", descricao:"Somos o primeiro sorriso de quem chega. Acolhemos visitantes e membros para que todos se sintam em casa desde a porta.", fotos:["https://picsum.photos/seed/recepcao1/640/420"] },
+    { nome:"Intercessão", descricao:"Sustentamos a igreja em oração. Nos reunimos para clamar, agradecer e interceder pelas vidas, famílias e pela cidade.", fotos:["https://picsum.photos/seed/oracao1/640/420"] },
+    { nome:"Casais", descricao:"Fortalecemos os relacionamentos à luz da Palavra, com encontros, conversas e comunhão entre casais de todas as fases.", fotos:["https://picsum.photos/seed/casais1/640/420"] },
+    { nome:"Diaconato", descricao:"Servimos na prática: organização, estrutura e apoio para que cada culto e evento aconteça com excelência e cuidado.", fotos:["https://picsum.photos/seed/diaconato1/640/420"] }
+  ],
 
   // CARTÕES MONTÁVEIS — o pastor liga/desliga (ativo) e cria novos.
   cartoes: [
