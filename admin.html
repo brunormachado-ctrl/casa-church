@@ -162,10 +162,13 @@
       </div>
       <div class="secao">
         <h3>Trocar a minha senha</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Recomendado: troque a senha temporária por uma só sua.</p>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:6px">Aqui você troca a senha <b style="color:var(--ink)">da conta que está conectada agora</b>:</p>
+        <p style="font-size:14px;color:var(--sand);margin-bottom:14px"><i class="ti ti-user-circle" style="vertical-align:-2px"></i> <b id="meuEmail">—</b></p>
         <div class="field"><label>Nova senha (mínimo 6 caracteres)</label><input id="novaSenha" type="text" placeholder="sua nova senha"></div>
+        <div class="field"><label>Repita a nova senha</label><input id="novaSenha2" type="text" placeholder="digite de novo"></div>
         <button class="btn solid block" onclick="trocarSenha()"><i class="ti ti-key"></i> Salvar nova senha</button>
         <div class="ok-msg" id="senhaMsg"></div>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px"><i class="ti ti-info-circle" style="vertical-align:-2px"></i> Cada pessoa (pastor, pastora) troca a própria senha entrando com o seu próprio e-mail e senha.</p>
       </div>
     </div>
 
@@ -221,6 +224,8 @@
       $('viewLogin').classList.add('hidden');
       $('viewPainel').classList.remove('hidden');
       $('btnSair').classList.remove('hidden');
+      const u = (await sb.auth.getUser()).data.user;
+      if(u) $('meuEmail').textContent = u.email;
       await carregarCadastros();
       cfgAtual = await getConfig();
       preencherConfig(cfgAtual);
@@ -272,11 +277,12 @@
 
     window.trocarSenha = async function(){
       const msg = $('senhaMsg'); msg.className='ok-msg'; msg.textContent='';
-      const nova = $('novaSenha').value;
+      const nova = $('novaSenha').value, nova2 = $('novaSenha2').value;
       if(!nova || nova.length < 6){ msg.className='err'; msg.textContent='A senha precisa ter ao menos 6 caracteres.'; return; }
+      if(nova !== nova2){ msg.className='err'; msg.textContent='As duas senhas não são iguais. Confira e tente de novo.'; return; }
       const { error } = await sb.auth.updateUser({ password: nova });
       if(error){ msg.className='err'; msg.textContent='Erro: '+error.message; return; }
-      $('novaSenha').value=''; msg.className='ok-msg'; msg.textContent='Senha alterada! Use a nova no próximo login. ✔';
+      $('novaSenha').value=''; $('novaSenha2').value=''; msg.className='ok-msg'; msg.textContent='Senha alterada! Use a nova no próximo login. ✔';
     };
 
     // ===================== MENSAGENS =====================
