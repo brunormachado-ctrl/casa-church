@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=3" />
 </head>
 <body>
   <header class="top">
@@ -56,9 +56,22 @@
 
   <footer>
     <div class="wrap foot">
-      <span id="footRodape">© Casa Church</span>
-      <a id="instaLink" href="#" target="_blank" rel="noopener"><i class="ti ti-brand-instagram"></i>Instagram</a>
-      <a href="admin.html"><i class="ti ti-lock"></i>Área do administrador</a>
+      <div class="foot-brand">
+        <span class="emblem" aria-hidden="true">
+          <svg viewBox="0 0 100 100" fill="none" stroke="#d9c6a6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="50" cy="50" r="46" stroke-width="2.5"/>
+            <circle cx="50" cy="50" r="38" stroke-width="2.5"/>
+            <path d="M27 61 L46 37 L57 49 L69 38 L83 61" stroke-width="4.5"/>
+          </svg>
+        </span>
+        <b>Casa Church</b>
+      </div>
+      <div class="foot-links">
+        <a id="instaLink" href="#" target="_blank" rel="noopener"><i class="ti ti-brand-instagram"></i>Instagram</a>
+        <span class="foot-sep">·</span>
+        <a href="admin.html"><i class="ti ti-lock"></i>Área do administrador</a>
+      </div>
+      <p class="foot-copy" id="footRodape">© Casa Church</p>
     </div>
   </footer>
 
@@ -74,9 +87,9 @@
     </div>
   </div>
 
-  <script src="config.js"></script>
+  <script src="config.js?v=3"></script>
   <script type="module">
-    import { getConfig } from './db.js';
+    import { getConfig } from './db.js?v=3';
     const config = await getConfig();
     const wa = config.whatsapp ? `https://wa.me/${config.whatsapp}` : '#';
 
@@ -85,7 +98,7 @@
       const frase = config.fraseAbertura || "Essa CASA é sua!";
       const m = frase.match(/^(.*?)\bCASA\b(.*)$/i);
       document.getElementById("abertura").innerHTML = m
-        ? `<span class="script">${m[1].trim()}</span><span class="forte">CASA</span><span class="script">${m[2].trim()}</span>`
+        ? `<span class="script">${m[1].trim()}</span> <span class="forte">CASA</span> <span class="script">${m[2].trim()}</span>`
         : `<span class="script">${frase}</span>`;
     })();
     document.getElementById("footRodape").textContent = config.rodape;
