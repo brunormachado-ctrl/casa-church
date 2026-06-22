@@ -87,6 +87,7 @@
       <div class="tab" id="tabCfg" onclick="abaPainel('cfg')"><i class="ti ti-settings"></i> Configurar</div>
       <div class="tab" id="tabAdmins" onclick="abaPainel('admins')"><i class="ti ti-shield-lock"></i> Acessos</div>
       <div class="tab" id="tabMsg" onclick="abaPainel('msg')"><i class="ti ti-message-circle"></i> Mensagens</div>
+      <div class="tab" id="tabOra" onclick="abaPainel('oracoes')"><i class="ti ti-heart"></i> Orações</div>
     </div>
 
     <!-- Cadastros -->
@@ -224,6 +225,14 @@
         <div id="grpPessoas"></div>
       </div>
     </div>
+
+    <!-- Orações -->
+    <div id="paneOracoes" class="hidden">
+      <div class="secao">
+        <h3><i class="ti ti-heart" style="color:var(--teal)"></i> Pedidos de oração</h3>
+        <div id="listaOracoes"><p class="empty">Carregando…</p></div>
+      </div>
+    </div>
   </div>
 
   <script src="config.js?v=7"></script>
@@ -268,13 +277,35 @@
     }
 
     window.abaPainel = function(qual){
-      const abas = { cad:'tabCad', cfg:'tabCfg', admins:'tabAdmins', msg:'tabMsg' };
-      const panes = { cad:'paneCad', cfg:'paneCfg', admins:'paneAdmins', msg:'paneMsg' };
+      const abas = { cad:'tabCad', cfg:'tabCfg', admins:'tabAdmins', msg:'tabMsg', oracoes:'tabOra' };
+      const panes = { cad:'paneCad', cfg:'paneCfg', admins:'paneAdmins', msg:'paneMsg', oracoes:'paneOracoes' };
       for(const k in abas) $(abas[k]).classList.toggle('active', qual===k);
       for(const k in panes) $(panes[k]).classList.toggle('hidden', qual!==k);
       if(qual==='admins') carregarAdmins();
       if(qual==='msg') carregarMensagens();
+      if(qual==='oracoes') carregarOracoes();
     };
+
+    async function carregarOracoes(){
+      const box = $('listaOracoes');
+      const { data, error } = await sb.from('casa_oracoes').select('*').order('criado_em',{ascending:false});
+      if(error){ box.innerHTML = `<p class="empty">Erro: ${error.message}</p>`; return; }
+      if(!data || !data.length){ box.innerHTML = '<p class="empty">Nenhum pedido por enquanto. 🙏</p>'; return; }
+      box.innerHTML = data.map(o=>{
+        const dt = new Date(o.criado_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+        const tel = (o.whatsapp||'').replace(/\D/g,'');
+        const wa = tel ? `<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${tel.startsWith('55')?tel:'55'+tel}"><i class="ti ti-brand-whatsapp"></i> Responder</a>` : '';
+        const badge = o.status==='orado' ? '<span class="badge b-aprov">Orado</span>' : '<span class="badge b-pend">Novo</span>';
+        const btnOrado = o.status!=='orado' ? `<button class="btn" onclick="marcarOrado('${o.id}')"><i class="ti ti-check"></i> Marcar como orado</button>` : '';
+        return `<div class="cad">
+          <div class="top-line"><span class="nome">${o.nome||'Anônimo'}</span>${badge}<span style="color:var(--muted);font-size:13px;margin-left:auto">${dt}</span></div>
+          <p class="txt" style="white-space:pre-wrap;margin:6px 0 10px">${(o.pedido||'').replace(/</g,'&lt;')}</p>
+          <div class="acoes">${wa}${btnOrado}<button class="btn rm" onclick="excluirOracao('${o.id}')"><i class="ti ti-trash"></i> Excluir</button></div>
+        </div>`;
+      }).join('');
+    }
+    window.marcarOrado = async function(id){ await sb.from('casa_oracoes').update({status:'orado'}).eq('id',id); carregarOracoes(); };
+    window.excluirOracao = async function(id){ if(!confirm('Excluir este pedido de oração?')) return; await sb.from('casa_oracoes').delete().eq('id',id); carregarOracoes(); };
 
     async function carregarAdmins(){
       $('suporteInfo').textContent = (cfgAtual && cfgAtual.suporteAdmin) ? cfgAtual.suporteAdmin : 'Não preenchido (preencha em Configurar → Suporte).';

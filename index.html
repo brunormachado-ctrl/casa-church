@@ -226,6 +226,44 @@
            <span class="chev"><i class="ti ti-chevron-right"></i></span>
          </button>`);
     });
+
+    // ---- Pedido de oração (atalho fixo) ----
+    const ao = document.createElement("a"); ao.href="#"; ao.innerHTML='<i class="ti ti-heart"></i>Oração';
+    ao.onclick = e=>{ e.preventDefault(); abrirOracao(); }; menu.appendChild(ao);
+    cards.insertAdjacentHTML("beforeend",
+      `<button class="tile" onclick="abrirOracao()">
+         <span class="ic"><i class="ti ti-heart"></i></span>
+         <span><span class="tt">Pedido de oração</span><span class="sub">Estamos com você</span></span>
+         <span class="chev"><i class="ti ti-chevron-right"></i></span>
+       </button>`);
+
+    window.abrirOracao = function(){
+      document.getElementById("modalIcon").className = "ti ti-heart";
+      document.getElementById("modalTitle").textContent = "Pedido de oração";
+      document.getElementById("modalBody").innerHTML =
+        `<p class="txt">Conta pra gente o que você está vivendo. Vamos orar por você. 🤍</p>
+         <div class="field"><input id="or_nome" placeholder="Seu nome (opcional)"></div>
+         <div class="field"><input id="or_wa" placeholder="WhatsApp (opcional)"></div>
+         <div class="field"><textarea id="or_pedido" placeholder="Escreva seu pedido de oração…" style="min-height:110px"></textarea></div>
+         <button class="btn solid block" onclick="enviarOracao(this)"><i class="ti ti-send"></i> Enviar pedido</button>
+         <div style="color:var(--danger);font-size:13px;margin-top:8px;min-height:16px" id="or_msg"></div>`;
+      document.getElementById("modal").classList.add("show");
+    };
+    window.enviarOracao = async function(btn){
+      const msg = document.getElementById("or_msg"); msg.textContent="";
+      const pedido = document.getElementById("or_pedido").value.trim();
+      if(!pedido){ msg.textContent="Escreva seu pedido."; return; }
+      btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2"></i> Enviando…';
+      const reg = { nome:document.getElementById("or_nome").value.trim(), whatsapp:document.getElementById("or_wa").value.trim(), pedido };
+      const { error } = await window.sb.from("casa_oracoes").insert(reg);
+      if(error){ btn.disabled=false; btn.innerHTML='<i class="ti ti-send"></i> Enviar pedido'; msg.textContent="Não consegui enviar. Tente de novo."; return; }
+      document.getElementById("modalBody").innerHTML =
+        `<div style="text-align:center;padding:18px 6px">
+           <i class="ti ti-circle-check" style="font-size:52px;color:var(--ok)"></i>
+           <p class="txt" style="margin-top:12px">Recebemos seu pedido. 🤍<br>A Casa Church vai orar por você!</p>
+           <button class="btn block" onclick="fecharModal()"><i class="ti ti-home"></i> Voltar</button>
+         </div>`;
+    };
   </script>
 </body>
 </html>
