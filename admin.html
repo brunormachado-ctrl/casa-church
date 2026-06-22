@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
   <style>
     .login{max-width:380px;margin:40px auto;padding:0 18px}
     .badge{font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:999px;font-weight:500}
@@ -61,13 +61,7 @@
     <div class="wrap">
       <div class="topbar">
         <a class="brand" href="index.html">
-          <span class="emblem" aria-hidden="true">
-            <svg viewBox="0 0 100 100" fill="none" stroke="#d9c6a6" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="50" cy="50" r="46" stroke-width="2.5"/>
-              <circle cx="50" cy="50" r="38" stroke-width="2.5"/>
-              <path d="M27 61 L46 37 L57 49 L69 38 L83 61" stroke-width="4.5"/>
-            </svg>
-          </span>
+          <span class="emblem" aria-hidden="true"><img src="logo-emblema.png" alt="Casa Church" /></span>
           <b>Casa <span>Church</span> · Admin</b>
         </a>
         <button class="btn hidden" id="btnSair" onclick="sair()"><i class="ti ti-logout"></i>Sair</button>
@@ -96,6 +90,9 @@
 
     <!-- Cadastros -->
     <div id="paneCad">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn" onclick="exportarCSV()"><i class="ti ti-download"></i> Exportar (planilha)</button>
+      </div>
       <div class="filtros" id="filtros">
         <span class="filtro on" data-f="todos" onclick="filtrar(this)">Todos</span>
         <span class="filtro" data-f="pendente" onclick="filtrar(this)">Pendentes</span>
@@ -207,6 +204,7 @@
 
     let cfgAtual = null;
     let filtroAtual = 'todos';
+    let cadById = {};
     let ministeriosEdit = [];
     let cultosEdit = [];
     let cadastrosMsg = [];
@@ -389,6 +387,7 @@
       const box = $('listaCad');
       if(error){ box.innerHTML = `<p class="empty">Erro ao carregar: ${error.message}</p>`; return; }
       let lista = data||[];
+      cadById = {}; (data||[]).forEach(c=>cadById[c.id]=c);
       if(filtroAtual==='pendente') lista = lista.filter(c=>c.status==='pendente');
       else if(filtroAtual==='visitante') lista = lista.filter(c=>c.tipo==='visitante');
       else if(filtroAtual==='membro') lista = lista.filter(c=>c.tipo==='membro');
@@ -411,13 +410,51 @@
       const badgeTipo = c.tipo==='membro' ? '<span class="badge b-mem">Membro</span>' : '<span class="badge b-vis">Visitante</span>';
       const badgeStatus = c.status==='aprovado' ? '<span class="badge b-aprov">Aprovado</span>' : '<span class="badge b-pend">Pendente</span>';
       const btnAprovar = c.status==='pendente' ? `<button class="btn" onclick="aprovar('${c.id}')"><i class="ti ti-check"></i> Aprovar</button>` : '';
-      return `<div class="cad">
+      return `<div class="cad" id="cad-${c.id}">
         <div class="top-line"><span class="nome">${c.nome}</span>${badgeTipo}${badgeStatus}</div>
         <div class="top-line" style="margin-bottom:0"><a class="link" href="${wa}" target="_blank"><i class="ti ti-brand-whatsapp"></i> ${c.whatsapp}</a><span style="color:var(--muted);font-size:13px;margin-left:auto">${data}</span></div>
         ${linhas?`<dl>${linhas}</dl>`:''}
-        <div class="acoes">${btnAprovar}<button class="btn" onclick="excluir('${c.id}','${c.nome.replace(/'/g,"")}')"><i class="ti ti-trash"></i> Excluir</button></div>
+        <div class="acoes">${btnAprovar}<button class="btn" onclick="editarCadastro('${c.id}')"><i class="ti ti-edit"></i> Editar</button><button class="btn rm" onclick="excluir('${c.id}','${c.nome.replace(/'/g,"")}')"><i class="ti ti-trash"></i> Excluir</button></div>
       </div>`;
     }
+
+    window.editarCadastro = function(id){
+      const c = cadById[id]; if(!c) return;
+      const d = c.dados||{};
+      const card = document.getElementById('cad-'+id); if(!card) return;
+      card.innerHTML = `
+        <div class="field"><label>Nome</label><input id="ed-nome-${id}" value="${(c.nome||'').replace(/"/g,'&quot;')}"></div>
+        <div class="field"><label>WhatsApp</label><input id="ed-wa-${id}" value="${(c.whatsapp||'').replace(/"/g,'&quot;')}"></div>
+        <div class="two">
+          <div class="field"><label>Tipo</label><select id="ed-tipo-${id}"><option value="visitante"${c.tipo==='visitante'?' selected':''}>Visitante</option><option value="membro"${c.tipo==='membro'?' selected':''}>Membro</option></select></div>
+          <div class="field"><label>Situação</label><select id="ed-status-${id}"><option value="pendente"${c.status==='pendente'?' selected':''}>Pendente</option><option value="aprovado"${c.status==='aprovado'?' selected':''}>Aprovado</option></select></div>
+        </div>
+        <div class="field"><label>Observações</label><textarea id="ed-obs-${id}">${d.obs||''}</textarea></div>
+        <div class="acoes"><button class="btn solid" onclick="salvarEdicao('${id}')"><i class="ti ti-check"></i> Salvar</button><button class="btn" onclick="carregarCadastros()">Cancelar</button></div>
+        <div class="err" id="ed-msg-${id}"></div>`;
+    };
+    window.salvarEdicao = async function(id){
+      const c = cadById[id]; const d = { ...(c.dados||{}) };
+      d.obs = $('ed-obs-'+id).value;
+      const upd = { nome:$('ed-nome-'+id).value.trim(), whatsapp:$('ed-wa-'+id).value.trim(), tipo:$('ed-tipo-'+id).value, status:$('ed-status-'+id).value, dados:d };
+      if(!upd.nome){ $('ed-msg-'+id).textContent='O nome não pode ficar vazio.'; return; }
+      const { error } = await sb.from('casa_cadastros').update(upd).eq('id',id);
+      if(error){ $('ed-msg-'+id).textContent='Erro: '+error.message; return; }
+      carregarCadastros();
+    };
+
+    function csvCel(v){ return '"'+(v==null?'':String(v)).replace(/"/g,'""')+'"'; }
+    window.exportarCSV = async function(){
+      const { data, error } = await sb.from('casa_cadastros').select('*').order('criado_em');
+      if(error){ alert('Erro: '+error.message); return; }
+      const cols=['Nome','WhatsApp','Tipo','Situação','Cadastrado em','Nascimento','Aceitou Jesus em','Endereço','Batizado','Tempo de membro','Serve em ministério','Ministérios','Vezes que veio','Como conheceu','Observações'];
+      const linhas=[cols.map(csvCel).join(';')];
+      (data||[]).forEach(c=>{ const d=c.dados||{}; const dt=new Date(c.criado_em).toLocaleDateString('pt-BR');
+        linhas.push([c.nome,c.whatsapp,c.tipo,c.status,dt,d.nascimento,d.conversao,d.endereco,d.batizado,d.tempoMembro,d.serve,(Array.isArray(d.ministerios)?d.ministerios.join(', '):''),d.vezes,d.comoConheceu,d.obs].map(csvCel).join(';'));
+      });
+      const blob=new Blob(['﻿'+linhas.join('\r\n')],{type:'text/csv;charset=utf-8'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='membros-casa-church.csv'; a.click();
+    };
 
     window.aprovar = async function(id){
       await sb.from('casa_cadastros').update({status:'aprovado'}).eq('id',id);
