@@ -9,7 +9,7 @@ window.CASA = {
   rodape: "© Casa Church",
 
   // NÃO aparece na página pública — fica guardado só pra área do admin
-  suporteAdmin: "Suporte: Bruno R. Machado · (17) 9••••-••••",
+  suporteAdmin: "Idealizador do site: Bruno R. Machado · (17) 98203-1001 · qualquer dúvida, chamar.",
 
   instagram: { usuario: "casachurch_", url: "https://www.instagram.com/casachurch_/" },
   whatsapp: "5517900000000", // número da igreja (placeholder) — formato wa.me

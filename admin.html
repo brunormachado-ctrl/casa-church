@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=5" />
   <style>
     .login{max-width:380px;margin:40px auto;padding:0 18px}
     .badge{font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:999px;font-weight:500}
@@ -33,7 +33,12 @@
     .toggle-row:last-child{border-bottom:0}
     .toggle-row input{width:auto}
     .toggle-row .lbl{margin-right:auto;font-size:14px}
-    .switch-tabs{display:flex;gap:8px;margin-bottom:20px}
+    .switch-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+    .pessoa-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+    .pessoa-row:last-child{border-bottom:0}
+    .pessoa-row .nome{margin-right:auto}
+    .wa{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid rgba(67,180,143,.45);color:#7fe0c2;background:rgba(67,180,143,.10);cursor:pointer;white-space:nowrap}
+    .wa:hover{background:rgba(67,180,143,.18)}
     .empty{text-align:center;color:var(--muted);padding:40px 10px}
     .min-card{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
     .fotos-grid{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
@@ -79,6 +84,7 @@
       <div class="tab active" id="tabCad" onclick="abaPainel('cad')"><i class="ti ti-users"></i> Cadastros</div>
       <div class="tab" id="tabCfg" onclick="abaPainel('cfg')"><i class="ti ti-settings"></i> Configurar</div>
       <div class="tab" id="tabAdmins" onclick="abaPainel('admins')"><i class="ti ti-shield-lock"></i> Acessos</div>
+      <div class="tab" id="tabMsg" onclick="abaPainel('msg')"><i class="ti ti-message-circle"></i> Mensagens</div>
     </div>
 
     <!-- Cadastros -->
@@ -133,7 +139,7 @@
       <div class="secao">
         <h3><i class="ti ti-lifebuoy" style="color:var(--teal)"></i> Precisa de ajuda com o site?</h3>
         <p style="font-size:15px;color:var(--ink);margin-bottom:4px" id="suporteInfo">—</p>
-        <p style="font-size:12px;color:var(--muted)">Esta é a pessoa que montou e doou o site. Fale com ela em caso de dúvida.</p>
+        <p style="font-size:12px;color:var(--muted)">Idealizador do site. Qualquer dúvida, fale com ele.</p>
       </div>
       <div class="secao">
         <h3>Quem tem acesso ao painel</h3>
@@ -149,15 +155,37 @@
         <div class="ok-msg" id="adminMsg"></div>
       </div>
     </div>
+
+    <!-- Mensagens -->
+    <div id="paneMsg" class="hidden">
+      <div class="secao">
+        <h3><i class="ti ti-cake" style="color:var(--teal)"></i> Datas de hoje</h3>
+        <div id="hojeBox"><p class="empty">Carregando…</p></div>
+      </div>
+      <div class="secao">
+        <h3>Enviar para um grupo</h3>
+        <div class="field"><label>Para quem?</label><select id="msgGrupo" onchange="atualizarGrupo()"></select></div>
+        <div class="field"><label>Modelo pronto (opcional)</label><select id="msgModelo" onchange="aplicarModelo()"></select></div>
+        <div class="field"><label>Mensagem</label><textarea id="msgTexto" style="min-height:130px" placeholder="Escreva o recado aqui…"></textarea></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn" onclick="copiarTexto(document.getElementById('msgTexto').value,'Mensagem copiada!')"><i class="ti ti-copy"></i> Copiar mensagem</button>
+          <button class="btn" onclick="copiarNumeros()"><i class="ti ti-phone"></i> Copiar números (<span id="grpCount">0</span>)</button>
+        </div>
+        <div class="modal-note"><i class="ti ti-info-circle"></i><span><b>Envio em massa grátis (Lista de Transmissão):</b> no WhatsApp da igreja, crie uma Lista de Transmissão, cole os números, e depois cole a mensagem. Lembre: a pessoa precisa ter o número da igreja salvo pra receber.</span></div>
+        <p style="font-size:13px;color:var(--muted);margin:16px 0 8px">Ou envie individual (1 clique abre o WhatsApp com a mensagem pronta):</p>
+        <div id="grpPessoas"></div>
+      </div>
+    </div>
   </div>
 
-  <script src="config.js?v=3"></script>
+  <script src="config.js?v=5"></script>
   <script type="module">
     import { sb, getConfig, salvarConfig } from './db.js?v=3';
 
     let cfgAtual = null;
     let filtroAtual = 'todos';
     let ministeriosEdit = [];
+    let cadastrosMsg = [];
 
     const $ = id => document.getElementById(id);
     const labels = {
@@ -184,13 +212,12 @@
     }
 
     window.abaPainel = function(qual){
-      $('tabCad').classList.toggle('active', qual==='cad');
-      $('tabCfg').classList.toggle('active', qual==='cfg');
-      $('tabAdmins').classList.toggle('active', qual==='admins');
-      $('paneCad').classList.toggle('hidden', qual!=='cad');
-      $('paneCfg').classList.toggle('hidden', qual!=='cfg');
-      $('paneAdmins').classList.toggle('hidden', qual!=='admins');
+      const abas = { cad:'tabCad', cfg:'tabCfg', admins:'tabAdmins', msg:'tabMsg' };
+      const panes = { cad:'paneCad', cfg:'paneCfg', admins:'paneAdmins', msg:'paneMsg' };
+      for(const k in abas) $(abas[k]).classList.toggle('active', qual===k);
+      for(const k in panes) $(panes[k]).classList.toggle('hidden', qual!==k);
       if(qual==='admins') carregarAdmins();
+      if(qual==='msg') carregarMensagens();
     };
 
     async function carregarAdmins(){
@@ -227,6 +254,91 @@
       if(error){ alert('Erro: '+error.message); return; }
       carregarAdmins();
     };
+
+    // ===================== MENSAGENS =====================
+    const MODELOS = [
+      { nome:'— modelo pronto (opcional) —', texto:null },
+      { nome:'Aviso de culto', texto:'Olá! 🙌 Hoje tem culto na Casa Church. Venha com a sua família, te esperamos! 🤍' },
+      { nome:'Reunião de obreiros', texto:'Paz, obreiro(a)! 🙏 Passando pra lembrar da nossa reunião. Sua presença é muito importante. Conto com você!' },
+      { nome:'Convite pro batismo', texto:'Você tem vontade de ser batizado(a)? 💧 Estamos abrindo turma do curso de batismo na Casa Church. Responde aqui que eu te explico tudo!' },
+      { nome:'Recado para a igreja', texto:'Olá, família Casa Church! 🤍 ' }
+    ];
+
+    function telWa(w){ let d=(w||'').replace(/\D/g,''); if(!d) return ''; if(!d.startsWith('55')) d='55'+d; return d; }
+    window.copiarTexto = async function(txt, msg){
+      if(!txt){ alert('Não há nada pra copiar.'); return; }
+      try{ await navigator.clipboard.writeText(txt); alert(msg||'Copiado!'); }
+      catch(e){ alert('Copie manualmente:\n\n'+txt); }
+    };
+    window.enviarWaMsg = function(tel){
+      const msg = document.getElementById('msgTexto').value || '';
+      window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
+    };
+
+    function gruposDisponiveis(){
+      const g = [
+        {valor:'todos', label:'Todos os cadastros'},
+        {valor:'membros', label:'Somente membros'},
+        {valor:'visitantes', label:'Somente visitantes'},
+        {valor:'batizados', label:'Batizados'}
+      ];
+      ((cfgAtual&&cfgAtual.ministerios)||[]).forEach(m=>{ const nome=typeof m==='string'?m:m.nome; g.push({valor:'min:'+nome, label:'Ministério: '+nome}); });
+      return g;
+    }
+    function filtrarGrupo(v){
+      return cadastrosMsg.filter(c=>{
+        const d = c.dados||{};
+        if(v==='todos') return true;
+        if(v==='membros') return c.tipo==='membro';
+        if(v==='visitantes') return c.tipo==='visitante';
+        if(v==='batizados') return /sim/i.test(d.batizado||'');
+        if(v.startsWith('min:')) return Array.isArray(d.ministerios) && d.ministerios.includes(v.slice(4));
+        return false;
+      });
+    }
+    window.aplicarModelo = function(){
+      const m = MODELOS[+document.getElementById('msgModelo').value];
+      if(m && m.texto!=null) document.getElementById('msgTexto').value = m.texto;
+    };
+    window.atualizarGrupo = function(){
+      const lista = filtrarGrupo($('msgGrupo').value);
+      $('grpCount').textContent = lista.length;
+      $('grpPessoas').innerHTML = lista.length ? lista.map(c=>{
+        const tel = telWa(c.whatsapp);
+        return `<div class="pessoa-row"><span class="nome">${c.nome}</span>${tel
+          ? `<button class="wa" onclick="enviarWaMsg('${tel}')"><i class="ti ti-brand-whatsapp"></i> Enviar</button>`
+          : '<span style="font-size:12px;color:var(--muted)">sem WhatsApp</span>'}</div>`;
+      }).join('') : '<p class="empty" style="padding:18px">Ninguém neste grupo ainda.</p>';
+    };
+    window.copiarNumeros = function(){
+      const nums = filtrarGrupo($('msgGrupo').value).map(c=>c.whatsapp).filter(Boolean);
+      if(!nums.length){ alert('Nenhum número neste grupo.'); return; }
+      copiarTexto(nums.join(', '), nums.length+' número(s) copiado(s)! Cole na Lista de Transmissão.');
+    };
+
+    function renderHoje(){
+      const hoje=new Date(), mm=hoje.getMonth()+1, dd=hoje.getDate();
+      const ehHoje=(iso)=>{ const p=String(iso||'').split('-'); return p.length===3 && +p[1]===mm && +p[2]===dd; };
+      const linha=(c,msg)=>{ const tel=telWa(c.whatsapp); return `<div class="pessoa-row"><span class="nome">${c.nome}</span>${tel?`<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${tel}?text=${encodeURIComponent(msg)}"><i class="ti ti-brand-whatsapp"></i> Parabéns</a>`:''}</div>`; };
+      const aniv = cadastrosMsg.filter(c=>ehHoje((c.dados||{}).nascimento));
+      const conv = cadastrosMsg.filter(c=>ehHoje((c.dados||{}).conversao));
+      let html='';
+      if(aniv.length){ html += '<p style="font-size:13px;color:var(--sand);margin-bottom:6px">🎂 Aniversariantes</p>' +
+        aniv.map(c=>linha(c, `Feliz aniversário, ${(c.nome||'').split(' ')[0]}! 🎉 Toda a família Casa Church te deseja um dia muito abençoado. Que Deus continue cuidando de você! 🤍`)).join(''); }
+      if(conv.length){ html += '<p style="font-size:13px;color:var(--sand);margin:14px 0 6px">✝️ Aniversário de conversão</p>' +
+        conv.map(c=>linha(c, `${(c.nome||'').split(' ')[0]}, hoje é um dia muito especial! 🎉 É o aniversário da sua decisão de seguir Jesus. A Casa Church celebra essa vida com você! 🤍`)).join(''); }
+      $('hojeBox').innerHTML = html || '<p class="empty" style="padding:10px">Nenhum aniversário hoje. 🌤️</p>';
+    }
+
+    async function carregarMensagens(){
+      const selM = $('msgModelo');
+      if(!selM.dataset.pronto){ selM.innerHTML = MODELOS.map((m,i)=>`<option value="${i}">${m.nome}</option>`).join(''); selM.dataset.pronto='1'; }
+      $('msgGrupo').innerHTML = gruposDisponiveis().map(g=>`<option value="${g.valor}">${g.label}</option>`).join('');
+      const { data, error } = await sb.from('casa_cadastros').select('*');
+      cadastrosMsg = error ? [] : (data||[]);
+      renderHoje();
+      atualizarGrupo();
+    }
 
     window.filtrar = function(el){
       document.querySelectorAll('.filtro').forEach(f=>f.classList.remove('on'));
