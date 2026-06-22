@@ -6,7 +6,7 @@
   <title>Casa Church</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -44,9 +44,7 @@
       <line x1="129" y1="158" x2="147" y2="158" stroke-width="1"/>
       <text x="101" y="161" text-anchor="middle" fill="#d9c6a6" stroke="none" font-family="Inter,sans-serif" font-size="7.5" letter-spacing="2.5">COMUNIDADE CRISTÃ</text>
     </svg>
-    <p class="kicker" id="kicker"></p>
-    <h1 id="heroTitle"></h1>
-    <p class="sub" id="heroSub"></p>
+    <h1 class="abertura" id="abertura"></h1>
     <div class="pill"><span class="dot"></span>Próximo culto:&nbsp;<strong id="nextService">—</strong></div>
   </section>
 
@@ -82,10 +80,14 @@
     const config = await getConfig();
     const wa = config.whatsapp ? `https://wa.me/${config.whatsapp}` : '#';
 
-    // ---- topo ----
-    document.getElementById("kicker").textContent = config.kicker;
-    document.getElementById("heroTitle").textContent = config.heroTitulo;
-    document.getElementById("heroSub").textContent = config.tagline;
+    // ---- frase de abertura (estilo manuscrito + CASA em destaque) ----
+    (function(){
+      const frase = config.fraseAbertura || "Essa CASA é sua!";
+      const m = frase.match(/^(.*?)\bCASA\b(.*)$/i);
+      document.getElementById("abertura").innerHTML = m
+        ? `<span class="script">${m[1].trim()}</span><span class="forte">CASA</span><span class="script">${m[2].trim()}</span>`
+        : `<span class="script">${frase}</span>`;
+    })();
     document.getElementById("footRodape").textContent = config.rodape;
     if(config.instagram){
       const il = document.getElementById("instaLink");

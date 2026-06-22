@@ -5,9 +5,7 @@
    ===================================================================== */
 window.CASA = {
   nome: "Casa Church",
-  kicker: "Uma família para pertencer",
-  heroTitulo: "Bem-vindo à Casa",
-  tagline: "Venha como está. Aqui tem lugar pra você.",
+  fraseAbertura: "Essa CASA é sua!",
   rodape: "© Casa Church",
 
   // NÃO aparece na página pública — fica guardado só pra área do admin

@@ -88,9 +88,7 @@
     <div id="paneCfg" class="hidden">
       <div class="secao">
         <h3>Topo do site</h3>
-        <div class="field"><label>Frase de cima (kicker)</label><input id="c_kicker" /></div>
-        <div class="field"><label>Título grande</label><input id="c_heroTitulo" /></div>
-        <div class="field"><label>Subtítulo</label><input id="c_tagline" /></div>
+        <div class="field"><label>Frase de abertura (a palavra CASA fica em destaque)</label><input id="c_frase" placeholder="Essa CASA é sua!" /></div>
       </div>
       <div class="secao">
         <h3>Evento especial</h3>
@@ -209,9 +207,7 @@
     };
 
     function preencherConfig(c){
-      $('c_kicker').value = c.kicker||'';
-      $('c_heroTitulo').value = c.heroTitulo||'';
-      $('c_tagline').value = c.tagline||'';
+      $('c_frase').value = c.fraseAbertura||'';
       $('c_evAtivo').checked = !!(c.eventoEspecial&&c.eventoEspecial.ativo);
       $('c_evTitulo').value = c.eventoEspecial?.titulo||'';
       $('c_evTexto').value = c.eventoEspecial?.texto||'';
@@ -226,9 +222,7 @@
     window.salvar = async function(){
       $('cfgMsg').textContent = '';
       const c = JSON.parse(JSON.stringify(cfgAtual));
-      c.kicker = $('c_kicker').value;
-      c.heroTitulo = $('c_heroTitulo').value;
-      c.tagline = $('c_tagline').value;
+      c.fraseAbertura = $('c_frase').value;
       c.eventoEspecial = { ativo:$('c_evAtivo').checked, titulo:$('c_evTitulo').value, texto:$('c_evTexto').value };
       c.ministerios = $('c_ministerios').value.split('\n').map(s=>s.trim()).filter(Boolean);
       c.instagram = { usuario:$('c_instaUser').value.replace('@',''), url:'https://www.instagram.com/'+$('c_instaUser').value.replace('@','')+'/' };
