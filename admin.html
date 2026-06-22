@@ -160,6 +160,13 @@
         <button class="btn solid block lg" onclick="addAdmin()"><i class="ti ti-user-plus"></i> Adicionar administrador</button>
         <div class="ok-msg" id="adminMsg"></div>
       </div>
+      <div class="secao">
+        <h3>Trocar a minha senha</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Recomendado: troque a senha temporária por uma só sua.</p>
+        <div class="field"><label>Nova senha (mínimo 6 caracteres)</label><input id="novaSenha" type="text" placeholder="sua nova senha"></div>
+        <button class="btn solid block" onclick="trocarSenha()"><i class="ti ti-key"></i> Salvar nova senha</button>
+        <div class="ok-msg" id="senhaMsg"></div>
+      </div>
     </div>
 
     <!-- Mensagens -->
@@ -261,6 +268,15 @@
       const { error } = await sb.from('casa_admins').delete().eq('user_id', userId);
       if(error){ alert('Erro: '+error.message); return; }
       carregarAdmins();
+    };
+
+    window.trocarSenha = async function(){
+      const msg = $('senhaMsg'); msg.className='ok-msg'; msg.textContent='';
+      const nova = $('novaSenha').value;
+      if(!nova || nova.length < 6){ msg.className='err'; msg.textContent='A senha precisa ter ao menos 6 caracteres.'; return; }
+      const { error } = await sb.auth.updateUser({ password: nova });
+      if(error){ msg.className='err'; msg.textContent='Erro: '+error.message; return; }
+      $('novaSenha').value=''; msg.className='ok-msg'; msg.textContent='Senha alterada! Use a nova no próximo login. ✔';
     };
 
     // ===================== MENSAGENS =====================
