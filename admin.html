@@ -179,7 +179,12 @@
     <!-- Mensagens -->
     <div id="paneMsg" class="hidden">
       <div class="secao">
-        <h3><i class="ti ti-cake" style="color:var(--teal)"></i> Datas de hoje</h3>
+        <h3><i class="ti ti-cake" style="color:var(--teal)"></i> Aniversários</h3>
+        <div class="filtros" style="margin-bottom:14px">
+          <span class="filtro on" data-p="hoje" onclick="filtrarAniv(this)">Hoje</span>
+          <span class="filtro" data-p="semana" onclick="filtrarAniv(this)">Esta semana</span>
+          <span class="filtro" data-p="mes" onclick="filtrarAniv(this)">Este mês</span>
+        </div>
         <div id="hojeBox"><p class="empty">Carregando…</p></div>
       </div>
       <div class="secao">
@@ -359,18 +364,39 @@
       copiarTexto(nums.join(', '), nums.length+' número(s) copiado(s)! Cole na Lista de Transmissão.');
     };
 
-    function renderHoje(){
-      const hoje=new Date(), mm=hoje.getMonth()+1, dd=hoje.getDate();
-      const ehHoje=(iso)=>{ const p=String(iso||'').split('-'); return p.length===3 && +p[1]===mm && +p[2]===dd; };
-      const linha=(c,msg)=>{ const tel=telWa(c.whatsapp); return `<div class="pessoa-row"><span class="nome">${c.nome}</span>${tel?`<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${tel}?text=${encodeURIComponent(msg)}"><i class="ti ti-brand-whatsapp"></i> Parabéns</a>`:''}</div>`; };
-      const aniv = cadastrosMsg.filter(c=>ehHoje((c.dados||{}).nascimento));
-      const conv = cadastrosMsg.filter(c=>ehHoje((c.dados||{}).conversao));
+    let periodAniv = 'hoje';
+    window.filtrarAniv = function(el){
+      document.querySelectorAll('#paneMsg .filtros .filtro').forEach(f=>f.classList.remove('on'));
+      el.classList.add('on'); periodAniv = el.dataset.p; renderAniversarios();
+    };
+    function anivMatch(iso, periodo){
+      const p = String(iso||'').split('-'); if(p.length!==3) return false;
+      const mm=+p[1], dd=+p[2];
+      const hoje=new Date(), tD=hoje.getDate(), tM=hoje.getMonth(), tY=hoje.getFullYear();
+      if(periodo==='hoje') return (mm-1)===tM && dd===tD;
+      if(periodo==='mes') return (mm-1)===tM;
+      // semana atual (domingo a sábado)
+      const ini=new Date(tY,tM,tD-hoje.getDay()); ini.setHours(0,0,0,0);
+      const fim=new Date(ini); fim.setDate(ini.getDate()+6); fim.setHours(23,59,59,999);
+      const aniv=new Date(tY,mm-1,dd);
+      return aniv>=ini && aniv<=fim;
+    }
+    function renderAniversarios(){
+      const ddmm=iso=>{ const p=String(iso||'').split('-'); return p.length===3?`${p[2]}/${p[1]}`:''; };
+      const first=c=>(c.nome||'').split(' ')[0];
+      const mostrarData = periodAniv!=='hoje';
+      const linha=(c,msg,quando)=>{ const tel=telWa(c.whatsapp);
+        const dt=quando?`<span style="color:var(--muted);font-size:12px;margin-right:10px">${quando}</span>`:'';
+        return `<div class="pessoa-row"><span class="nome">${c.nome}</span>${dt}${tel?`<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${tel}?text=${encodeURIComponent(msg)}"><i class="ti ti-brand-whatsapp"></i> Parabéns</a>`:''}</div>`; };
+      const aniv = cadastrosMsg.filter(c=>anivMatch((c.dados||{}).nascimento, periodAniv));
+      const conv = cadastrosMsg.filter(c=>anivMatch((c.dados||{}).conversao, periodAniv));
       let html='';
       if(aniv.length){ html += '<p style="font-size:13px;color:var(--sand);margin-bottom:6px">🎂 Aniversariantes</p>' +
-        aniv.map(c=>linha(c, `Feliz aniversário, ${(c.nome||'').split(' ')[0]}! 🎉 Toda a família Casa Church te deseja um dia muito abençoado. Que Deus continue cuidando de você! 🤍`)).join(''); }
+        aniv.map(c=>linha(c, `Feliz aniversário, ${first(c)}! 🎉 Toda a família Casa Church te deseja um dia muito abençoado. Que Deus continue cuidando de você! 🤍`, mostrarData?ddmm((c.dados||{}).nascimento):'')).join(''); }
       if(conv.length){ html += '<p style="font-size:13px;color:var(--sand);margin:14px 0 6px">✝️ Aniversário de conversão</p>' +
-        conv.map(c=>linha(c, `${(c.nome||'').split(' ')[0]}, hoje é um dia muito especial! 🎉 É o aniversário da sua decisão de seguir Jesus. A Casa Church celebra essa vida com você! 🤍`)).join(''); }
-      $('hojeBox').innerHTML = html || '<p class="empty" style="padding:10px">Nenhum aniversário hoje. 🌤️</p>';
+        conv.map(c=>linha(c, `${first(c)}, é um dia muito especial! 🎉 É o aniversário da sua decisão de seguir Jesus. A Casa Church celebra essa vida com você! 🤍`, mostrarData?ddmm((c.dados||{}).conversao):'')).join(''); }
+      const lbl = periodAniv==='hoje'?'hoje':(periodAniv==='semana'?'esta semana':'este mês');
+      $('hojeBox').innerHTML = html || `<p class="empty" style="padding:10px">Nenhum aniversário ${lbl}. 🌤️</p>`;
     }
 
     window.escreverIA = async function(){
@@ -394,7 +420,7 @@
       $('msgGrupo').innerHTML = gruposDisponiveis().map(g=>`<option value="${g.valor}">${g.label}</option>`).join('');
       const { data, error } = await sb.from('casa_cadastros').select('*');
       cadastrosMsg = error ? [] : (data||[]);
-      renderHoje();
+      renderAniversarios();
       atualizarGrupo();
     }
 
