@@ -95,6 +95,7 @@
         <button class="btn" onclick="exportarCSV()"><i class="ti ti-download"></i> Exportar (planilha)</button>
       </div>
       <div id="novoCadBox"></div>
+      <div class="field" style="margin-bottom:12px"><input id="buscaCad" placeholder="Buscar por nome ou WhatsApp…" oninput="buscarCad(this.value)"></div>
       <div class="filtros" id="filtros">
         <span class="filtro on" data-f="todos" onclick="filtrar(this)">Todos</span>
         <span class="filtro" data-f="pendente" onclick="filtrar(this)">Pendentes</span>
@@ -220,6 +221,8 @@
     let cfgAtual = null;
     let filtroAtual = 'todos';
     let cadById = {};
+    let todosCads = [];
+    let buscaCad = '';
     let ministeriosEdit = [];
     let cultosEdit = [];
     let cadastrosMsg = [];
@@ -427,24 +430,34 @@
     }
 
     window.filtrar = function(el){
-      document.querySelectorAll('.filtro').forEach(f=>f.classList.remove('on'));
+      document.querySelectorAll('#filtros .filtro').forEach(f=>f.classList.remove('on'));
       el.classList.add('on');
       filtroAtual = el.dataset.f;
-      carregarCadastros();
+      renderListaCad();
     };
 
     async function carregarCadastros(){
       const { data, error } = await sb.from('casa_cadastros').select('*').order('criado_em',{ascending:false});
+      if(error){ $('listaCad').innerHTML = `<p class="empty">Erro ao carregar: ${error.message}</p>`; return; }
+      todosCads = data||[];
+      cadById = {}; todosCads.forEach(c=>cadById[c.id]=c);
+      renderListaCad();
+    }
+    function renderListaCad(){
       const box = $('listaCad');
-      if(error){ box.innerHTML = `<p class="empty">Erro ao carregar: ${error.message}</p>`; return; }
-      let lista = data||[];
-      cadById = {}; (data||[]).forEach(c=>cadById[c.id]=c);
+      let lista = todosCads.slice();
       if(filtroAtual==='pendente') lista = lista.filter(c=>c.status==='pendente');
       else if(filtroAtual==='visitante') lista = lista.filter(c=>c.tipo==='visitante');
       else if(filtroAtual==='membro') lista = lista.filter(c=>c.tipo==='membro');
-      if(!lista.length){ box.innerHTML = `<p class="empty">Nenhum cadastro por aqui ainda.</p>`; return; }
-      box.innerHTML = lista.map(render).join('');
+      const q = (buscaCad||'').trim().toLowerCase();
+      if(q){ const qd=q.replace(/\D/g,'');
+        lista = lista.filter(c => (c.nome||'').toLowerCase().includes(q) || (qd && (c.whatsapp||'').replace(/\D/g,'').includes(qd))); }
+      const total = lista.length;
+      const cabec = `<p style="font-size:13px;color:var(--muted);margin-bottom:10px">${total} ${total===1?'cadastro':'cadastros'}</p>`;
+      if(!total){ box.innerHTML = `<p class="empty">${todosCads.length ? 'Nada encontrado com esse filtro/busca.' : 'Nenhum cadastro por aqui ainda.'}</p>`; return; }
+      box.innerHTML = cabec + lista.map(render).join('');
     }
+    window.buscarCad = function(v){ buscaCad = v; renderListaCad(); };
 
     function render(c){
       const d = c.dados||{};
