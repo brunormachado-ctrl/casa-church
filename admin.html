@@ -88,7 +88,7 @@
       <div class="tab" id="tabCfg" onclick="abaPainel('cfg')"><i class="ti ti-settings"></i> Configurar</div>
       <div class="tab" id="tabAdmins" onclick="abaPainel('admins')"><i class="ti ti-shield-lock"></i> Acessos</div>
       <div class="tab" id="tabMsg" onclick="abaPainel('msg')"><i class="ti ti-message-circle"></i> Mensagens</div>
-      <div class="tab" id="tabOra" onclick="abaPainel('oracoes')"><i class="ti ti-heart"></i> Orações</div>
+      <div class="tab" id="tabOra" onclick="abaPainel('oracoes')"><i class="ti ti-heart"></i> Pedidos</div>
     </div>
 
     <!-- Cadastros -->
@@ -144,6 +144,12 @@
       <div class="secao">
         <h3>Seções que aparecem no site</h3>
         <div id="c_cartoes"></div>
+      </div>
+      <div class="secao">
+        <h3>Tipos de pedido (oração, visita…)</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">O que a pessoa pode pedir na home. Marque <b style="color:var(--ink)">"Pede endereço"</b> para mostrar os campos de casa/empresa e endereço (ideal para visita).</p>
+        <div id="c_solic_box"></div>
+        <button class="btn" onclick="addSolic()"><i class="ti ti-plus"></i> Adicionar tipo</button>
       </div>
       <div class="secao">
         <h3>Contato</h3>
@@ -230,13 +236,13 @@
     <!-- Orações -->
     <div id="paneOracoes" class="hidden">
       <div class="secao">
-        <h3><i class="ti ti-heart" style="color:var(--teal)"></i> Pedidos de oração</h3>
+        <h3><i class="ti ti-heart" style="color:var(--teal)"></i> Pedidos (oração, visita…)</h3>
         <div id="listaOracoes"><p class="empty">Carregando…</p></div>
       </div>
     </div>
   </div>
 
-  <script src="config.js?v=7"></script>
+  <script src="config.js?v=8"></script>
   <script type="module">
     import { sb, getConfig, salvarConfig } from './db.js?v=3';
 
@@ -248,6 +254,7 @@
     let ministeriosEdit = [];
     let cultosEdit = [];
     let heroFotoEdit = '';
+    let solicEdit = [];
     let cadastrosMsg = [];
     const DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
@@ -311,16 +318,24 @@
       const { data, error } = await sb.from('casa_oracoes').select('*').order('criado_em',{ascending:false});
       if(error){ box.innerHTML = `<p class="empty">Erro: ${error.message}</p>`; return; }
       if(!data || !data.length){ box.innerHTML = '<p class="empty">Nenhum pedido por enquanto. 🙏</p>'; return; }
+      const labelTipo = id => ((cfgAtual&&cfgAtual.solicitacoes)||[]).find(s=>s.id===id)?.label || (id==='oracao'?'Oração':id||'Pedido');
       box.innerHTML = data.map(o=>{
         const dt = new Date(o.criado_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
         const tel = (o.whatsapp||'').replace(/\D/g,'');
         const wa = tel ? `<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${tel.startsWith('55')?tel:'55'+tel}"><i class="ti ti-brand-whatsapp"></i> Responder</a>` : '';
-        const badge = o.status==='orado' ? '<span class="badge b-aprov">Orado</span>' : '<span class="badge b-pend">Novo</span>';
-        const btnOrado = o.status!=='orado' ? `<button class="btn" onclick="marcarOrado('${o.id}')"><i class="ti ti-check"></i> Marcar como orado</button>` : '';
+        const badgeTipo = `<span class="badge b-vis">${labelTipo(o.tipo)}</span>`;
+        const badge = o.status==='orado' ? '<span class="badge b-aprov">Concluído</span>' : '<span class="badge b-pend">Novo</span>';
+        const d = o.dados||{};
+        let extra='';
+        if(d.local) extra += `<dt>Local</dt><dd>${d.local}</dd>`;
+        if(d.endereco) extra += `<dt>Endereço</dt><dd>${(d.endereco||'').replace(/</g,'&lt;')}</dd>`;
+        if(o.whatsapp) extra += `<dt>Contato</dt><dd>${o.whatsapp}</dd>`;
+        const btnFeito = o.status!=='orado' ? `<button class="btn" onclick="marcarOrado('${o.id}')"><i class="ti ti-check"></i> Marcar como concluído</button>` : '';
         return `<div class="cad">
-          <div class="top-line"><span class="nome">${o.nome||'Anônimo'}</span>${badge}<span style="color:var(--muted);font-size:13px;margin-left:auto">${dt}</span></div>
-          <p class="txt" style="white-space:pre-wrap;margin:6px 0 10px">${(o.pedido||'').replace(/</g,'&lt;')}</p>
-          <div class="acoes">${wa}${btnOrado}<button class="btn rm" onclick="excluirOracao('${o.id}')"><i class="ti ti-trash"></i> Excluir</button></div>
+          <div class="top-line"><span class="nome">${o.nome||'Anônimo'}</span>${badgeTipo}${badge}<span style="color:var(--muted);font-size:13px;margin-left:auto">${dt}</span></div>
+          ${o.pedido?`<p class="txt" style="white-space:pre-wrap;margin:6px 0 8px">${(o.pedido||'').replace(/</g,'&lt;')}</p>`:''}
+          ${extra?`<dl>${extra}</dl>`:''}
+          <div class="acoes">${wa}${btnFeito}<button class="btn rm" onclick="excluirOracao('${o.id}')"><i class="ti ti-trash"></i> Excluir</button></div>
         </div>`;
       }).join('');
     }
@@ -697,6 +712,20 @@
       renderMinisterios();
     };
 
+    // ---- tipos de pedido (solicitações) ----
+    function slugify(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || ('tipo'+Date.now()); }
+    function renderSolic(){
+      $('c_solic_box').innerHTML = solicEdit.map((s,i)=>`<div class="min-card">
+        <div class="field"><label>Nome do pedido</label><input value="${(s.label||'').replace(/"/g,'&quot;')}" oninput="updateSolic(${i},'label',this.value)"></div>
+        <div class="toggle-row"><span class="lbl">Pede endereço (casa/empresa + endereço)</span><input type="checkbox" ${s.pedeEndereco?'checked':''} onchange="updateSolic(${i},'pedeEndereco',this.checked)"></div>
+        <div class="toggle-row"><span class="lbl">Aparece no site</span><input type="checkbox" ${s.ativo?'checked':''} onchange="updateSolic(${i},'ativo',this.checked)"></div>
+        <button class="btn rm" onclick="removeSolic(${i})"><i class="ti ti-trash"></i> Remover</button>
+      </div>`).join('') || '<p style="font-size:13px;color:var(--muted)">Nenhum tipo cadastrado.</p>';
+    }
+    window.updateSolic = (i,campo,val)=>{ solicEdit[i][campo]=val; };
+    window.addSolic = ()=>{ solicEdit.push({id:'', label:'Novo pedido', ativo:true, pedeEndereco:false}); renderSolic(); };
+    window.removeSolic = (i)=>{ solicEdit.splice(i,1); renderSolic(); };
+
     // ---- foto do topo ----
     function renderHeroFoto(){
       $('heroFotoBox').innerHTML =
@@ -757,6 +786,8 @@
       $('c_pixNome').value = c.pix?.nome||'';
       heroFotoEdit = c.heroFoto||'';
       renderHeroFoto();
+      solicEdit = (c.solicitacoes||[]).map(s=>({ id:s.id||'', label:s.label||'', ativo:s.ativo!==false, pedeEndereco:!!s.pedeEndereco }));
+      renderSolic();
       $('c_cartoes').innerHTML = (c.cartoes||[]).map((ct,i)=>
         `<div class="toggle-row"><span class="lbl">${ct.titulo}</span><input type="checkbox" data-i="${i}" ${ct.ativo?'checked':''}></div>`).join('');
     }
@@ -779,6 +810,9 @@
       c.suporteAdmin = $('c_suporte').value;
       c.heroFoto = heroFotoEdit;
       c.pix = { chave: $('c_pixChave').value.trim(), nome: $('c_pixNome').value.trim() };
+      c.solicitacoes = solicEdit
+        .map(s=>({ id:s.id||slugify(s.label), label:(s.label||'').trim(), ativo:!!s.ativo, pedeEndereco:!!s.pedeEndereco }))
+        .filter(s=>s.label);
       document.querySelectorAll('#c_cartoes input').forEach(inp=>{ c.cartoes[+inp.dataset.i].ativo = inp.checked; });
       const end = (c.cartoes||[]).find(x=>x.id==='endereco'); if(end) end.texto = $('c_endereco').value;
       try{

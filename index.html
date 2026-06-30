@@ -81,7 +81,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=7"></script>
+  <script src="config.js?v=8"></script>
   <script type="module">
     import { getConfig } from './db.js?v=3';
     const config = await getConfig();
@@ -227,40 +227,56 @@
          </button>`);
     });
 
-    // ---- Pedido de oração (atalho fixo) ----
-    const ao = document.createElement("a"); ao.href="#"; ao.innerHTML='<i class="ti ti-heart"></i>Oração';
-    ao.onclick = e=>{ e.preventDefault(); abrirOracao(); }; menu.appendChild(ao);
-    cards.insertAdjacentHTML("beforeend",
-      `<button class="tile" onclick="abrirOracao()">
-         <span class="ic"><i class="ti ti-heart"></i></span>
-         <span><span class="tt">Pedido de oração</span><span class="sub">Estamos com você</span></span>
-         <span class="chev"><i class="ti ti-chevron-right"></i></span>
-       </button>`);
+    // ---- Solicitações (oração, visita, etc. — configuráveis pelo pastor) ----
+    const iconeSolic = id => ({ oracao:'ti-heart', visita:'ti-home' }[id] || 'ti-message-circle');
+    (config.solicitacoes||[]).filter(s=>s.ativo).forEach(s=>{
+      const ic = iconeSolic(s.id);
+      const a = document.createElement("a"); a.href="#";
+      a.innerHTML = `<i class="ti ${ic}"></i>${s.label.replace(/^Pedido de /i,'')}`;
+      a.onclick = e=>{ e.preventDefault(); abrirSolicitacao(s.id); }; menu.appendChild(a);
+      cards.insertAdjacentHTML("beforeend",
+        `<button class="tile" onclick="abrirSolicitacao('${s.id}')">
+           <span class="ic"><i class="ti ${ic}"></i></span>
+           <span><span class="tt">${s.label}</span><span class="sub">${s.pedeEndereco?'Agende com a gente':'Estamos com você'}</span></span>
+           <span class="chev"><i class="ti ti-chevron-right"></i></span>
+         </button>`);
+    });
 
-    window.abrirOracao = function(){
-      document.getElementById("modalIcon").className = "ti ti-heart";
-      document.getElementById("modalTitle").textContent = "Pedido de oração";
+    window.abrirSolicitacao = function(id){
+      const s = (config.solicitacoes||[]).find(x=>x.id===id); if(!s) return;
+      const extra = s.pedeEndereco ? `
+         <div class="field"><label>É para casa ou empresa?</label><select id="sol_local"><option>Casa</option><option>Empresa</option></select></div>
+         <div class="field"><input id="sol_end" placeholder="Endereço (rua, número, bairro)"></div>` : "";
+      document.getElementById("modalIcon").className = "ti " + iconeSolic(id);
+      document.getElementById("modalTitle").textContent = s.label;
       document.getElementById("modalBody").innerHTML =
-        `<p class="txt">Conta pra gente o que você está vivendo. Vamos orar por você. 🤍</p>
-         <div class="field"><input id="or_nome" placeholder="Seu nome (opcional)"></div>
-         <div class="field"><input id="or_wa" placeholder="WhatsApp (opcional)"></div>
-         <div class="field"><textarea id="or_pedido" placeholder="Escreva seu pedido de oração…" style="min-height:110px"></textarea></div>
-         <button class="btn solid block" onclick="enviarOracao(this)"><i class="ti ti-send"></i> Enviar pedido</button>
-         <div style="color:var(--danger);font-size:13px;margin-top:8px;min-height:16px" id="or_msg"></div>`;
+        `<p class="txt">${s.pedeEndereco ? 'Preencha pra gente combinar a visita. 🤍' : 'Conta pra gente. Vamos orar por você. 🤍'}</p>
+         <div class="field"><input id="sol_nome" placeholder="Seu nome (opcional)"></div>
+         <div class="field"><input id="sol_wa" placeholder="WhatsApp / telefone"></div>
+         ${extra}
+         <div class="field"><textarea id="sol_msg" placeholder="${s.pedeEndereco?'Algo que queira nos contar (opcional)':'Escreva seu pedido…'}" style="min-height:100px"></textarea></div>
+         <button class="btn solid block" onclick="enviarSolicitacao(this,'${s.id}')"><i class="ti ti-send"></i> Enviar</button>
+         <div style="color:var(--danger);font-size:13px;margin-top:8px;min-height:16px" id="sol_erro"></div>`;
       document.getElementById("modal").classList.add("show");
     };
-    window.enviarOracao = async function(btn){
-      const msg = document.getElementById("or_msg"); msg.textContent="";
-      const pedido = document.getElementById("or_pedido").value.trim();
-      if(!pedido){ msg.textContent="Escreva seu pedido."; return; }
-      btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2"></i> Enviando…';
-      const reg = { nome:document.getElementById("or_nome").value.trim(), whatsapp:document.getElementById("or_wa").value.trim(), pedido };
+    window.enviarSolicitacao = async function(btn, id){
+      const s = (config.solicitacoes||[]).find(x=>x.id===id) || {};
+      const erro = document.getElementById("sol_erro"); erro.textContent="";
+      const msg = (document.getElementById("sol_msg").value||"").trim();
+      const endEl = document.getElementById("sol_end");
+      const end = endEl ? endEl.value.trim() : "";
+      if(s.pedeEndereco && !end){ erro.textContent="Por favor, informe o endereço."; return; }
+      if(!s.pedeEndereco && !msg){ erro.textContent="Escreva seu pedido."; return; }
+      btn.disabled=true; btn.innerHTML='<i class="ti ti-loader-2"></i> Enviando…';
+      const dados = {};
+      if(s.pedeEndereco){ dados.local = document.getElementById("sol_local").value; dados.endereco = end; }
+      const reg = { tipo:id, nome:document.getElementById("sol_nome").value.trim(), whatsapp:document.getElementById("sol_wa").value.trim(), pedido:msg, dados };
       const { error } = await window.sb.from("casa_oracoes").insert(reg);
-      if(error){ btn.disabled=false; btn.innerHTML='<i class="ti ti-send"></i> Enviar pedido'; msg.textContent="Não consegui enviar. Tente de novo."; return; }
+      if(error){ btn.disabled=false; btn.innerHTML='<i class="ti ti-send"></i> Enviar'; erro.textContent="Não consegui enviar. Tente de novo."; return; }
       document.getElementById("modalBody").innerHTML =
         `<div style="text-align:center;padding:18px 6px">
            <i class="ti ti-circle-check" style="font-size:52px;color:var(--ok)"></i>
-           <p class="txt" style="margin-top:12px">Recebemos seu pedido. 🤍<br>A Casa Church vai orar por você!</p>
+           <p class="txt" style="margin-top:12px">Recebemos seu pedido. 🤍<br>Logo a Casa Church entra em contato!</p>
            <button class="btn block" onclick="fecharModal()"><i class="ti ti-home"></i> Voltar</button>
          </div>`;
     };

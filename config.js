@@ -16,6 +16,13 @@ window.CASA = {
   heroFoto: "", // foto/banner do topo (vazio = fundo padrão). Editável no painel.
   pix: { chave: "", nome: "" }, // dízimos/ofertas — editável no painel
 
+  // Tipos de solicitação que a pessoa pode enviar na home (configurável no painel).
+  // pedeEndereco:true mostra os campos de casa/empresa, endereço e telefone (ex.: visita).
+  solicitacoes: [
+    { id: "oracao", label: "Pedido de oração", ativo: true,  pedeEndereco: false },
+    { id: "visita", label: "Pedido de visita", ativo: true,  pedeEndereco: true  }
+  ],
+
   // Dias: 0=Dom 1=Seg 2=Ter 3=Qua 4=Qui 5=Sex 6=Sáb
   cultos: [
     { diaSemana: 0, dia: "Domingo", nome: "Celebração", hora: "09h30", h24: 9 },
