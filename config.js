@@ -23,6 +23,15 @@ window.CASA = {
     { id: "visita", label: "Pedido de visita", ativo: true,  pedeEndereco: true  }
   ],
 
+  // Discipulados (células/pequenos grupos) — nome do líder, endereço e telefone.
+  // Exemplos; o pastor edita no painel.
+  discipulados: [
+    { lider: "Líder de exemplo", endereco: "Rua Exemplo, 100 — Centro", telefone: "(17) 90000-0000" }
+  ],
+
+  // Apresentação de bebê — o pastor liga e define a data; famílias enviam os dados.
+  apresentacao: { ativo: false, data: "", texto: "Vai apresentar seu bebê? Preencha os dados abaixo. 🤍" },
+
   // Dias: 0=Dom 1=Seg 2=Ter 3=Qua 4=Qui 5=Sex 6=Sáb
   cultos: [
     { diaSemana: 0, dia: "Domingo", nome: "Celebração", hora: "09h30", h24: 9 },
@@ -51,6 +60,7 @@ window.CASA = {
   cartoes: [
     { id:"cultos",      ativo:true,  tipo:"cultos",      icone:"ti-clock-hour-8",     titulo:"Cultos" },
     { id:"ministerios", ativo:true,  tipo:"ministerios", icone:"ti-users-group",      titulo:"Ministérios" },
+    { id:"discipulados", ativo:true, tipo:"discipulados", icone:"ti-map-2",            titulo:"Discipulados" },
     { id:"endereco",    ativo:true,  tipo:"endereco",    icone:"ti-map-pin",          titulo:"Endereço", texto:"Estrada do Mineiro, 575 — Penápolis-SP, 16303-330" },
     { id:"atendimento", ativo:true,  tipo:"texto",       icone:"ti-heart-handshake",  titulo:"Atendimento pastoral", texto:"Precisa de oração ou conversa? Fale com a gente.", botao:"Falar com o pastor" },
     { id:"dizimos",     ativo:false, tipo:"pix",         icone:"ti-gift",             titulo:"Dízimos e ofertas", texto:"Sua contribuição abençoa e sustenta a obra. 🤍 Use a chave PIX abaixo:" }

@@ -142,6 +142,18 @@
         <button class="btn" onclick="addMinisterio()"><i class="ti ti-plus"></i> Adicionar ministério</button>
       </div>
       <div class="secao">
+        <h3>Discipulados</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Cada discipulado tem líder, endereço e telefone. Aparecem quando a pessoa clica em "Discipulados" (com botões de "como chegar" e WhatsApp).</p>
+        <div id="c_disc_box"></div>
+        <button class="btn" onclick="addDisc()"><i class="ti ti-plus"></i> Adicionar discipulado</button>
+      </div>
+      <div class="secao">
+        <h3>Apresentação de bebê</h3>
+        <div class="toggle-row"><span class="lbl">Mostrar no site (abrir inscrições)</span><input type="checkbox" id="c_apAtivo"></div>
+        <div class="field" style="margin-top:12px"><label>Data da apresentação</label><input id="c_apData" placeholder="ex.: 13 de julho, no culto da noite"></div>
+        <div class="field"><label>Texto (opcional)</label><input id="c_apTexto"></div>
+      </div>
+      <div class="secao">
         <h3>Seções que aparecem no site</h3>
         <div id="c_cartoes"></div>
       </div>
@@ -242,9 +254,9 @@
     </div>
   </div>
 
-  <script src="config.js?v=8"></script>
+  <script src="config.js?v=9"></script>
   <script type="module">
-    import { sb, getConfig, salvarConfig } from './db.js?v=3';
+    import { sb, getConfig, salvarConfig } from './db.js?v=4';
 
     let cfgAtual = null;
     let filtroAtual = 'todos';
@@ -255,6 +267,7 @@
     let cultosEdit = [];
     let heroFotoEdit = '';
     let solicEdit = [];
+    let discipuladosEdit = [];
     let cadastrosMsg = [];
     const DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
@@ -326,9 +339,9 @@
         const badgeTipo = `<span class="badge b-vis">${labelTipo(o.tipo)}</span>`;
         const badge = o.status==='orado' ? '<span class="badge b-aprov">Concluído</span>' : '<span class="badge b-pend">Novo</span>';
         const d = o.dados||{};
+        const labelsP = { crianca:'Criança', pai:'Pai', mae:'Mãe', nascimento:'Nascimento', local:'Local', endereco:'Endereço' };
         let extra='';
-        if(d.local) extra += `<dt>Local</dt><dd>${d.local}</dd>`;
-        if(d.endereco) extra += `<dt>Endereço</dt><dd>${(d.endereco||'').replace(/</g,'&lt;')}</dd>`;
+        for(const k in d){ if(d[k]) extra += `<dt>${labelsP[k]||k}</dt><dd>${String(d[k]).replace(/</g,'&lt;')}</dd>`; }
         if(o.whatsapp) extra += `<dt>Contato</dt><dd>${o.whatsapp}</dd>`;
         const btnFeito = o.status!=='orado' ? `<button class="btn" onclick="marcarOrado('${o.id}')"><i class="ti ti-check"></i> Marcar como concluído</button>` : '';
         return `<div class="cad">
@@ -712,6 +725,19 @@
       renderMinisterios();
     };
 
+    // ---- discipulados ----
+    function renderDisc(){
+      $('c_disc_box').innerHTML = discipuladosEdit.map((d,i)=>`<div class="min-card">
+        <div class="field"><label>Líder</label><input value="${(d.lider||'').replace(/"/g,'&quot;')}" oninput="updateDisc(${i},'lider',this.value)"></div>
+        <div class="field"><label>Endereço</label><input value="${(d.endereco||'').replace(/"/g,'&quot;')}" oninput="updateDisc(${i},'endereco',this.value)"></div>
+        <div class="field"><label>Telefone</label><input value="${(d.telefone||'').replace(/"/g,'&quot;')}" oninput="updateDisc(${i},'telefone',this.value)"></div>
+        <button class="btn rm" onclick="removeDisc(${i})"><i class="ti ti-trash"></i> Remover</button>
+      </div>`).join('') || '<p style="font-size:13px;color:var(--muted)">Nenhum discipulado cadastrado.</p>';
+    }
+    window.updateDisc = (i,campo,val)=>{ discipuladosEdit[i][campo]=val; };
+    window.addDisc = ()=>{ discipuladosEdit.push({lider:'', endereco:'', telefone:''}); renderDisc(); };
+    window.removeDisc = (i)=>{ discipuladosEdit.splice(i,1); renderDisc(); };
+
     // ---- tipos de pedido (solicitações) ----
     function slugify(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || ('tipo'+Date.now()); }
     function renderSolic(){
@@ -788,6 +814,11 @@
       renderHeroFoto();
       solicEdit = (c.solicitacoes||[]).map(s=>({ id:s.id||'', label:s.label||'', ativo:s.ativo!==false, pedeEndereco:!!s.pedeEndereco }));
       renderSolic();
+      discipuladosEdit = (c.discipulados||[]).map(d=>({ lider:d.lider||'', endereco:d.endereco||'', telefone:d.telefone||'' }));
+      renderDisc();
+      $('c_apAtivo').checked = !!(c.apresentacao && c.apresentacao.ativo);
+      $('c_apData').value = c.apresentacao?.data || '';
+      $('c_apTexto').value = c.apresentacao?.texto || '';
       $('c_cartoes').innerHTML = (c.cartoes||[]).map((ct,i)=>{
         const m = ct.mostrar||'ambos';
         return `<div class="min-card" style="padding:12px 14px">
@@ -824,6 +855,10 @@
       c.solicitacoes = solicEdit
         .map(s=>({ id:s.id||slugify(s.label), label:(s.label||'').trim(), ativo:!!s.ativo, pedeEndereco:!!s.pedeEndereco }))
         .filter(s=>s.label);
+      c.discipulados = discipuladosEdit
+        .map(d=>({ lider:(d.lider||'').trim(), endereco:(d.endereco||'').trim(), telefone:(d.telefone||'').trim() }))
+        .filter(d=>d.lider||d.endereco);
+      c.apresentacao = { ativo:$('c_apAtivo').checked, data:$('c_apData').value.trim(), texto:$('c_apTexto').value.trim() };
       document.querySelectorAll('#c_cartoes input[data-i]').forEach(inp=>{ c.cartoes[+inp.dataset.i].ativo = inp.checked; });
       document.querySelectorAll('#c_cartoes select[data-mostra]').forEach(sel=>{ c.cartoes[+sel.dataset.mostra].mostrar = sel.value; });
       const end = (c.cartoes||[]).find(x=>x.id==='endereco'); if(end) end.texto = $('c_endereco').value;

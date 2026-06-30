@@ -18,7 +18,15 @@ export async function getConfig() {
   const base = window.CASA || {};
   try {
     const { data } = await sb.from('casa_config').select('dados').eq('id', 1).maybeSingle();
-    if (data && data.dados) return { ...base, ...data.dados };
+    if (data && data.dados) {
+      const merged = { ...base, ...data.dados };
+      // garante que seções novas (cartões padrão) apareçam mesmo numa config já salva
+      if (Array.isArray(base.cartoes) && Array.isArray(merged.cartoes)) {
+        const ids = new Set(merged.cartoes.map(c => c.id));
+        base.cartoes.forEach(c => { if (!ids.has(c.id)) merged.cartoes.push(c); });
+      }
+      return merged;
+    }
   } catch (e) { console.error('getConfig', e); }
   return base;
 }

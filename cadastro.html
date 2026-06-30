@@ -155,8 +155,8 @@
     </div>
   </div>
 
-  <script src="config.js?v=8"></script>
-  <script type="module" src="db.js?v=3"></script>
+  <script src="config.js?v=9"></script>
+  <script type="module" src="db.js?v=4"></script>
   <script>
     function trocar(tipo){
       const ehV = tipo==="visitante";
@@ -211,7 +211,7 @@
   </script>
   <script type="module">
     // monta as opções de ministério a partir do que o admin cadastrou (banco)
-    import { getConfig } from './db.js?v=3';
+    import { getConfig } from './db.js?v=4';
     const c = await getConfig();
     document.getElementById("listaMinisterios").innerHTML =
       (c.ministerios||[]).map(m=>{ const nome = typeof m==="string" ? m : m.nome;

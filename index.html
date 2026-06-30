@@ -81,9 +81,9 @@
     </div>
   </div>
 
-  <script src="config.js?v=8"></script>
+  <script src="config.js?v=9"></script>
   <script type="module">
-    import { getConfig } from './db.js?v=3';
+    import { getConfig } from './db.js?v=4';
     const config = await getConfig();
     const wa = config.whatsapp ? `https://wa.me/${config.whatsapp}` : '#';
 
@@ -162,6 +162,23 @@
         return `<iframe class="mapa" style="height:200px" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${q}&output=embed"></iframe>
           <p class="txt">${c.texto}</p>
           <a class="btn solid block" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${q}"><i class="ti ti-map-pin"></i> Como chegar</a>`;
+      }
+      if(c.tipo==="discipulados"){
+        const lista = config.discipulados||[];
+        if(!lista.length) return `<p class="txt">Em breve os discipulados aparecem aqui.</p>`;
+        return `<p class="txt">Participe de um discipulado pertinho de você:</p>` + lista.map(d=>{
+          const q = encodeURIComponent(d.endereco||"");
+          const tel = (d.telefone||"").replace(/\D/g,"");
+          const wa = tel ? (tel.startsWith("55")?tel:"55"+tel) : "";
+          return `<div style="border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px">
+            <p style="font-weight:500;margin-bottom:4px"><i class="ti ti-user" style="color:var(--teal);vertical-align:-2px"></i> ${d.lider||"Líder"}</p>
+            ${d.endereco?`<p class="txt" style="margin:2px 0 8px">${d.endereco}</p>`:""}
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${d.endereco?`<a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${q}"><i class="ti ti-map-pin"></i> Como chegar</a>`:""}
+              ${wa?`<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${wa}"><i class="ti ti-brand-whatsapp"></i> ${d.telefone}</a>`:""}
+            </div>
+          </div>`;
+        }).join("");
       }
       if(c.tipo==="pix"){
         const pix = config.pix||{};
@@ -279,6 +296,48 @@
            <p class="txt" style="margin-top:12px">Recebemos seu pedido. 🤍<br>Logo a Casa Church entra em contato!</p>
            <button class="btn block" onclick="fecharModal()"><i class="ti ti-home"></i> Voltar</button>
          </div>`;
+    };
+
+    // ---- Apresentação de bebê (atalho + formulário, se o pastor ativar) ----
+    if(config.apresentacao && config.apresentacao.ativo){
+      const ap = config.apresentacao;
+      const a = document.createElement("a"); a.href="#"; a.innerHTML='<i class="ti ti-baby-carriage"></i>Apresentação';
+      a.onclick=e=>{ e.preventDefault(); abrirApresentacao(); }; menu.appendChild(a);
+      cards.insertAdjacentHTML("beforeend",
+        `<button class="tile" onclick="abrirApresentacao()">
+           <span class="ic"><i class="ti ti-baby-carriage"></i></span>
+           <span><span class="tt">Apresentação de bebê</span><span class="sub">${ap.data?('Dia '+ap.data):'Inscreva seu bebê'}</span></span>
+           <span class="chev"><i class="ti ti-chevron-right"></i></span>
+         </button>`);
+    }
+    window.abrirApresentacao = function(){
+      const ap = config.apresentacao||{};
+      document.getElementById("modalIcon").className="ti ti-baby-carriage";
+      document.getElementById("modalTitle").textContent="Apresentação de bebê";
+      document.getElementById("modalBody").innerHTML =
+        `${ap.data?`<div class="modal-note"><i class="ti ti-calendar"></i><span>Data da apresentação: <b>${ap.data}</b></span></div>`:''}
+         <p class="txt">${ap.texto||'Preencha os dados do seu bebê. 🤍'}</p>
+         <div class="field"><input id="ap_crianca" placeholder="Nome da criança"></div>
+         <div class="two"><div class="field"><input id="ap_pai" placeholder="Nome do pai"></div><div class="field"><input id="ap_mae" placeholder="Nome da mãe"></div></div>
+         <div class="field"><label>Data de nascimento da criança</label><input id="ap_nasc" type="date"></div>
+         <div class="field"><input id="ap_wa" placeholder="WhatsApp / telefone de contato"></div>
+         <button class="btn solid block" onclick="enviarApresentacao(this)"><i class="ti ti-send"></i> Enviar inscrição</button>
+         <div style="color:var(--danger);font-size:13px;margin-top:8px;min-height:16px" id="ap_erro"></div>`;
+      document.getElementById("modal").classList.add("show");
+    };
+    window.enviarApresentacao = async function(btn){
+      const erro=document.getElementById("ap_erro"); erro.textContent="";
+      const crianca=document.getElementById("ap_crianca").value.trim();
+      if(!crianca){ erro.textContent="Informe o nome da criança."; return; }
+      btn.disabled=true; btn.innerHTML='<i class="ti ti-loader-2"></i> Enviando…';
+      const dados={ crianca, pai:document.getElementById("ap_pai").value.trim(), mae:document.getElementById("ap_mae").value.trim(), nascimento:document.getElementById("ap_nasc").value };
+      const reg={ tipo:"apresentacao", nome:crianca, whatsapp:document.getElementById("ap_wa").value.trim(), pedido:"", dados };
+      const { error } = await window.sb.from("casa_oracoes").insert(reg);
+      if(error){ btn.disabled=false; btn.innerHTML='<i class="ti ti-send"></i> Enviar inscrição'; erro.textContent="Não consegui enviar. Tente de novo."; return; }
+      document.getElementById("modalBody").innerHTML =
+        `<div style="text-align:center;padding:18px 6px"><i class="ti ti-circle-check" style="font-size:52px;color:var(--ok)"></i>
+           <p class="txt" style="margin-top:12px">Inscrição recebida! 🤍<br>A Casa Church vai entrar em contato.</p>
+           <button class="btn block" onclick="fecharModal()"><i class="ti ti-home"></i> Voltar</button></div>`;
     };
   </script>
 </body>
