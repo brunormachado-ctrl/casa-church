@@ -209,7 +209,7 @@
     // ---- monta o menu (abre janela) e os atalhos ----
     const ativos = config.cartoes.filter(c=>c.ativo);
     const menu = document.getElementById("menu");
-    ativos.forEach(c=>{
+    ativos.filter(c=>(c.mostrar||'ambos')!=='cartao').forEach(c=>{
       const a = document.createElement("a");
       a.href = "#";
       a.innerHTML = `<i class="ti ${c.icone}"></i>${c.titulo}`;
@@ -218,7 +218,7 @@
     });
 
     const cards = document.getElementById("cards");
-    ativos.forEach(c=>{
+    ativos.filter(c=>(c.mostrar||'ambos')!=='menu').forEach(c=>{
       cards.insertAdjacentHTML("beforeend",
         `<button class="tile" onclick="abrirModal('${c.id}')">
            <span class="ic"><i class="ti ${c.icone}"></i></span>

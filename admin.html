@@ -788,8 +788,19 @@
       renderHeroFoto();
       solicEdit = (c.solicitacoes||[]).map(s=>({ id:s.id||'', label:s.label||'', ativo:s.ativo!==false, pedeEndereco:!!s.pedeEndereco }));
       renderSolic();
-      $('c_cartoes').innerHTML = (c.cartoes||[]).map((ct,i)=>
-        `<div class="toggle-row"><span class="lbl">${ct.titulo}</span><input type="checkbox" data-i="${i}" ${ct.ativo?'checked':''}></div>`).join('');
+      $('c_cartoes').innerHTML = (c.cartoes||[]).map((ct,i)=>{
+        const m = ct.mostrar||'ambos';
+        return `<div class="min-card" style="padding:12px 14px">
+          <div class="toggle-row" style="border:0;padding:0"><span class="lbl">${ct.titulo}</span><input type="checkbox" data-i="${i}" ${ct.ativo?'checked':''}></div>
+          <div class="field" style="margin:10px 0 0"><label>Onde aparece</label>
+            <select data-mostra="${i}">
+              <option value="ambos"${m==='ambos'?' selected':''}>Menu e cartão</option>
+              <option value="menu"${m==='menu'?' selected':''}>Só no menu (cabeçalho)</option>
+              <option value="cartao"${m==='cartao'?' selected':''}>Só como cartão</option>
+            </select>
+          </div>
+        </div>`;
+      }).join('');
     }
 
     window.salvar = async function(){
@@ -813,7 +824,8 @@
       c.solicitacoes = solicEdit
         .map(s=>({ id:s.id||slugify(s.label), label:(s.label||'').trim(), ativo:!!s.ativo, pedeEndereco:!!s.pedeEndereco }))
         .filter(s=>s.label);
-      document.querySelectorAll('#c_cartoes input').forEach(inp=>{ c.cartoes[+inp.dataset.i].ativo = inp.checked; });
+      document.querySelectorAll('#c_cartoes input[data-i]').forEach(inp=>{ c.cartoes[+inp.dataset.i].ativo = inp.checked; });
+      document.querySelectorAll('#c_cartoes select[data-mostra]').forEach(sel=>{ c.cartoes[+sel.dataset.mostra].mostrar = sel.value; });
       const end = (c.cartoes||[]).find(x=>x.id==='endereco'); if(end) end.texto = $('c_endereco').value;
       try{
         await salvarConfig(c);
