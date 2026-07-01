@@ -729,6 +729,7 @@
     function renderDisc(){
       $('c_disc_box').innerHTML = discipuladosEdit.map((d,i)=>`<div class="min-card">
         <div class="field"><label>Líder</label><input value="${(d.lider||'').replace(/"/g,'&quot;')}" oninput="updateDisc(${i},'lider',this.value)"></div>
+        <div class="field"><label>Dia e horário</label><input value="${(d.horario||'').replace(/"/g,'&quot;')}" oninput="updateDisc(${i},'horario',this.value)" placeholder="ex.: Terça, 20h"></div>
         <div class="field"><label>Endereço</label><input value="${(d.endereco||'').replace(/"/g,'&quot;')}" oninput="updateDisc(${i},'endereco',this.value)"></div>
         <div class="field"><label>Telefone</label><input value="${(d.telefone||'').replace(/"/g,'&quot;')}" oninput="updateDisc(${i},'telefone',this.value)"></div>
         <button class="btn rm" onclick="removeDisc(${i})"><i class="ti ti-trash"></i> Remover</button>
@@ -814,7 +815,7 @@
       renderHeroFoto();
       solicEdit = (c.solicitacoes||[]).map(s=>({ id:s.id||'', label:s.label||'', ativo:s.ativo!==false, pedeEndereco:!!s.pedeEndereco }));
       renderSolic();
-      discipuladosEdit = (c.discipulados||[]).map(d=>({ lider:d.lider||'', endereco:d.endereco||'', telefone:d.telefone||'' }));
+      discipuladosEdit = (c.discipulados||[]).map(d=>({ lider:d.lider||'', horario:d.horario||'', endereco:d.endereco||'', telefone:d.telefone||'' }));
       renderDisc();
       $('c_apAtivo').checked = !!(c.apresentacao && c.apresentacao.ativo);
       $('c_apData').value = c.apresentacao?.data || '';
@@ -856,7 +857,7 @@
         .map(s=>({ id:s.id||slugify(s.label), label:(s.label||'').trim(), ativo:!!s.ativo, pedeEndereco:!!s.pedeEndereco }))
         .filter(s=>s.label);
       c.discipulados = discipuladosEdit
-        .map(d=>({ lider:(d.lider||'').trim(), endereco:(d.endereco||'').trim(), telefone:(d.telefone||'').trim() }))
+        .map(d=>({ lider:(d.lider||'').trim(), horario:(d.horario||'').trim(), endereco:(d.endereco||'').trim(), telefone:(d.telefone||'').trim() }))
         .filter(d=>d.lider||d.endereco);
       c.apresentacao = { ativo:$('c_apAtivo').checked, data:$('c_apData').value.trim(), texto:$('c_apTexto').value.trim() };
       document.querySelectorAll('#c_cartoes input[data-i]').forEach(inp=>{ c.cartoes[+inp.dataset.i].ativo = inp.checked; });
