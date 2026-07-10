@@ -558,7 +558,7 @@
       const wa = tel ? `https://wa.me/55${tel}` : '#';
       let linhas = '';
       for(const k in d){
-        if(['quando','consent'].includes(k) || d[k]==='' || d[k]==null) continue;
+        if(['quando','consent','foto'].includes(k) || d[k]==='' || d[k]==null) continue;
         const val = Array.isArray(d[k]) ? (d[k].join(', ')||'—') : d[k];
         if(Array.isArray(d[k]) && !d[k].length) continue;
         linhas += `<dt>${labels[k]||k}</dt><dd>${val}</dd>`;
@@ -566,8 +566,9 @@
       const badgeTipo = c.tipo==='membro' ? '<span class="badge b-mem">Membro</span>' : '<span class="badge b-vis">Visitante</span>';
       const badgeStatus = c.status==='aprovado' ? '<span class="badge b-aprov">Aprovado</span>' : '<span class="badge b-pend">Pendente</span>';
       const btnAprovar = c.status==='pendente' ? `<button class="btn" onclick="aprovar('${c.id}')"><i class="ti ti-check"></i> Aprovar</button>` : '';
+      const avatar = d.foto ? `<a href="${d.foto}" target="_blank" rel="noopener" title="Ver foto"><img src="${d.foto}" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--line);flex:none"></a>` : '';
       return `<div class="cad" id="cad-${c.id}">
-        <div class="top-line"><span class="nome">${c.nome}</span>${badgeTipo}${badgeStatus}</div>
+        <div class="top-line">${avatar}<span class="nome">${c.nome}</span>${badgeTipo}${badgeStatus}</div>
         <div class="top-line" style="margin-bottom:0"><a class="link" href="${wa}" target="_blank"><i class="ti ti-brand-whatsapp"></i> ${c.whatsapp}</a><span style="color:var(--muted);font-size:13px;margin-left:auto">${data}</span></div>
         ${linhas?`<dl>${linhas}</dl>`:''}
         <div class="acoes">${btnAprovar}<button class="btn" onclick="editarCadastro('${c.id}')"><i class="ti ti-edit"></i> Editar</button><button class="btn rm" onclick="excluir('${c.id}','${c.nome.replace(/'/g,"")}')"><i class="ti ti-trash"></i> Excluir</button></div>

@@ -75,6 +75,12 @@
       <div class="field">
         <label class="checkbox consent"><input type="checkbox" name="consent" required> <span>Autorizo a Casa Church a guardar meus dados e me enviar mensagens no WhatsApp. <span class="req">*</span></span></label>
       </div>
+      <div class="field">
+        <label>Foto (opcional)</label>
+        <div class="foto-preview" style="margin-bottom:8px"></div>
+        <label class="btn"><i class="ti ti-camera"></i> Adicionar foto<input type="file" accept="image/*" hidden onchange="uploadFotoCad(this)"></label>
+        <div class="foto-status" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:14px"></div>
+      </div>
       <button class="btn solid block lg" type="submit"><i class="ti ti-check"></i> Enviar</button>
     </form>
 
@@ -142,6 +148,12 @@
       <div class="field">
         <label class="checkbox consent"><input type="checkbox" name="consent" required> <span>Autorizo a Casa Church a guardar meus dados e me enviar mensagens no WhatsApp. <span class="req">*</span></span></label>
       </div>
+      <div class="field">
+        <label>Foto (opcional)</label>
+        <div class="foto-preview" style="margin-bottom:8px"></div>
+        <label class="btn"><i class="ti ti-camera"></i> Adicionar foto<input type="file" accept="image/*" hidden onchange="uploadFotoCad(this)"></label>
+        <div class="foto-status" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:14px"></div>
+      </div>
       <button class="btn solid block lg" type="submit"><i class="ti ti-check"></i> Concluir cadastro</button>
     </form>
 
@@ -164,7 +176,28 @@
       document.getElementById("tabMembro").classList.toggle("active", !ehV);
       document.getElementById("formVisitante").classList.toggle("hidden", !ehV);
       document.getElementById("formMembro").classList.toggle("hidden", ehV);
+      window.fotoCadastroUrl = "";
+      document.querySelectorAll(".foto-preview").forEach(p=>p.innerHTML="");
+      document.querySelectorAll(".foto-status").forEach(s=>s.textContent="");
     }
+
+    window.fotoCadastroUrl = "";
+    window.uploadFotoCad = async function(input){
+      const file = input.files[0]; if(!file) return;
+      const field = input.closest(".field");
+      const status = field.querySelector(".foto-status");
+      if(!window.sb){ status.textContent = "Aguarde 1 segundo e tente de novo."; return; }
+      status.textContent = "Enviando foto…";
+      try{
+        const ext = (file.name.split(".").pop()||"jpg").toLowerCase();
+        const path = "membros/"+Date.now()+"-"+Math.round(Math.random()*1e6)+"."+ext;
+        const { error } = await window.sb.storage.from("casa-fotos").upload(path, file, { contentType:file.type });
+        if(error) throw error;
+        window.fotoCadastroUrl = window.sb.storage.from("casa-fotos").getPublicUrl(path).data.publicUrl;
+        field.querySelector(".foto-preview").innerHTML = '<img src="'+window.fotoCadastroUrl+'" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:50%;border:1px solid var(--line)">';
+        status.textContent = "Foto adicionada ✔";
+      }catch(err){ console.error(err); status.textContent = "Não consegui enviar a foto. Tente outra."; }
+    };
 
     function toggleMinisterios(){
       const mostra = document.getElementById("serve").value === "sim";
@@ -181,6 +214,7 @@
       }
       dados.tipo = tipo;
       dados.quando = new Date().toISOString();
+      if(window.fotoCadastroUrl) dados.foto = window.fotoCadastroUrl;
 
       btn.disabled = true;
       btn.innerHTML = '<i class="ti ti-loader-2"></i> Enviando…';
